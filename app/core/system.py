@@ -8,27 +8,28 @@ import streamlit as st
 
 
 class ArtifactRegistry:
-    """Handles the registration and management of artifacts."""
+    """Class to register artifacts."""
 
     def __init__(self, database: Database, storage: Storage):
-        """Initialize ArtifactRegistry with storage and database.
+        """Initialize registry.
 
         Args:
-            database (Database): The database for metadata storage.
-            storage (Storage): The storage for saving artifact files.
+            database (Database): The database
+            storage (Storage): local storage
         """
         self._database = database
         self._storage = storage
 
     def register(self, artifact: Artifact):
-        """Register an artifact in both storage and database.
+        """Register the artifact.
 
         Args:
-            artifact (Artifact): The artifact to be registered.
+            artifact (Artifact): artifact to register
         """
+        # save the artifact in the storage
         self._storage.save(artifact.data, artifact.asset_path)
-
-        metadata_entry = {
+        # save the metadata in the database
+        entry = {
             "name": artifact.name,
             "version": artifact.version,
             "asset_path": artifact.asset_path,
@@ -36,78 +37,74 @@ class ArtifactRegistry:
             "metadata": artifact.metadata,
             "type": artifact.type,
         }
-        self._database.set_data("artifacts", artifact.id, metadata_entry)
+        self._database.set_data(f"artifacts", artifact.id, entry)
 
-    def list(self, artifact_type: str = None) -> List[Artifact]:
-        """Retrieve a list of artifacts from the registry.
+    def list(self, type: str = None) -> List[Artifact]:
+        """Get artrifacts in the registry
 
         Args:
-            artifact_type (str, optional): Filter artifacts by type.
-                Defaults to None.
+            type (str, optional): type of artifact you need. Defaults to None.
 
         Returns:
-            List[Artifact]: A list of registered artifacts.
+            List[Artifact]: list of artifacts
         """
-        artifact_entries = self._database.data_list("artifacts")
+        entries = self._database.data_list("artifacts")
         artifacts = []
-        for artifact_id, metadata in artifact_entries:
-            if artifact_type and metadata["type"] != artifact_type:
+        for id, data in entries:
+            if type is not None and data["type"] != type:
                 continue
             artifact = Artifact(
-                name=metadata["name"],
-                version=metadata["version"],
-                asset_path=metadata["asset_path"],
-                tags=metadata["tags"],
-                metadata=metadata["metadata"],
-                data=self._storage.load(metadata["asset_path"]),
-                artifact_type=metadata["type"],
+                name=data["name"],
+                version=data["version"],
+                asset_path=data["asset_path"],
+                tags=data["tags"],
+                metadata=data["metadata"],
+                data=self._storage.load(data["asset_path"]),
+                artifact_type=data["type"],
             )
             artifacts.append(artifact)
         return artifacts
 
     def get(self, artifact_id: str) -> Artifact:
-        """Fetch a specific artifact by ID.
+        """Get certain artifact.
 
         Args:
-            artifact_id (str): The unique ID of the artifact.
-
-        Returns:
-            Artifact: The retrieved artifact.
+            artifact_id (str): id of artifact
         """
-        metadata = self._database.get("artifacts", artifact_id)
-        st.write(metadata)
+        data = self._database.get("artifacts", artifact_id)
+        st.write(data)
         return Artifact(
-            name=metadata["name"],
-            version=metadata["version"],
-            asset_path=metadata["asset_path"],
-            tags=metadata["tags"],
-            metadata=metadata["metadata"],
-            data=self._storage.load(metadata["asset_path"]),
-            artifact_type=metadata["type"],
+            name=data["name"],
+            version=data["version"],
+            asset_path=data["asset_path"],
+            tags=data["tags"],
+            metadata=data["metadata"],
+            data=self._storage.load(data["asset_path"]),
+            artifact_type=data["type"],
         )
 
     def delete(self, artifact_id: str):
-        """Remove an artifact from both storage and database.
+        """Delete artifact from registry.
 
         Args:
-            artifact_id (str): The ID of the artifact to delete.
+            artifact_id (str): id of artifact
         """
-        metadata = self._database.get("artifacts", artifact_id)
-        self._storage.delete(metadata["asset_path"])
+        data = self._database.get("artifacts", artifact_id)
+        self._storage.delete(data["asset_path"])
         self._database.delete("artifacts", artifact_id)
 
 
 class AutoMLSystem:
-    """Main class representing the AutoML system."""
+    """Class for system."""
 
     _instance = None
 
     def __init__(self, storage: LocalStorage, database: Database):
-        """Initialize the AutoML system with storage and database.
+        """Initialize system.
 
         Args:
-            storage (LocalStorage): The system's storage mechanism.
-            database (Database): The system's metadata database.
+            storage (LocalStorage): storage of system
+            database (Database): database of objects
         """
         self._storage = storage
         self._database = database
@@ -115,10 +112,10 @@ class AutoMLSystem:
 
     @staticmethod
     def get_instance():
-        """Return a singleton instance of AutoMLSystem.
+        """Get an instance of this class.
 
         Returns:
-            AutoMLSystem: The singleton instance of this class.
+            AutoMlSystem: returns instance of this class
         """
         if AutoMLSystem._instance is None:
             AutoMLSystem._instance = AutoMLSystem(
@@ -130,9 +127,9 @@ class AutoMLSystem:
 
     @property
     def registry(self):
-        """Access the artifact registry.
+        """Get artifact registry.
 
         Returns:
-            ArtifactRegistry: The current artifact registry instance.
+            ArtifactRegistry: return current registry
         """
         return self._registry

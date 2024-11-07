@@ -162,9 +162,9 @@ If you did not implement the feature
 | `ML/model`                            | NF           | F              |                                          | |
 | `ML/model/extensions`                 | FN           | F              | 33%                                      | |
 | `ML/pipeline/evaluation`              | FN           |                |                                          | | 
-| `ST/page/datasets`                    | NF           |                |                                          | |
-| `ST/datasets/management/create`       | FN           |                |                                          | |
-| `ST/datasets/management/save`         | FN           |                |                                          | |
+| `ST/page/datasets`                    | NF           | F              |                                          | |
+| `ST/datasets/management/create`       | FN           | F              |                                          | |
+| `ST/datasets/management/save`         | FN           | F              |                                          | |
 | `ST/page/modelling`                   | NF           |                |                                          | |
 | `ST/modelling/datasets/list`          | FN           |                |                                          | |
 | `ST/modelling/datasets/features`      | FN           |                |                                          | |
