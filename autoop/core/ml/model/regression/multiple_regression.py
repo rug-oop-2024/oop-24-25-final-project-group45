@@ -15,17 +15,17 @@ class MultipleLinearRegression(Model):
         self.parameters = self._model.get_params()
         self.type = "regression"
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> None:
+    def fit(self, observations: np.ndarray, ground_truth: np.ndarray) -> None:
         """Fit the regression model with observations and ground truths.
 
         Args:
-            X (np.ndarray): Observations matrix (samples x variables).
-            y (np.ndarray): Ground truths vector corresponding to X (samples).
+            observations (np.ndarray): Observations matrix (samples x variables).
+            ground_truth (np.ndarray): Ground truths vector corresponding to X (samples).
         """
-        self._check_fit_requirements(X, y)
+        self._check_fit_requirements(observations, ground_truth)
 
         # Train the model on the provided data
-        self._model.fit(X, y)
+        self._model.fit(observations, ground_truth)
 
         # Update parameters with coefficients and intercept
         self.parameters.update({
@@ -34,7 +34,7 @@ class MultipleLinearRegression(Model):
         })
 
         self._fitted = True
-        self._n_features = X.shape[1]
+        self._n_features = observations.shape[1]
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """Generate predictions for the given observations.
