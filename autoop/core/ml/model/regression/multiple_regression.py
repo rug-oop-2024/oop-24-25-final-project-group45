@@ -1,6 +1,6 @@
 from autoop.core.ml.model.model import Model
 import numpy as np
-from sklearn.linear_model import LinearRegression as SkLinearRegression
+from sklearn.linear_model import LinearRegression
 
 
 class MultipleLinearRegression(Model):
@@ -9,7 +9,7 @@ class MultipleLinearRegression(Model):
     def __init__(self, *args, **kwargs):
         """Initialize object with optional parameters."""
         super().__init__()
-        self._model = SkLinearRegression(*args, **kwargs)
+        self._model = LinearRegression(*args, **kwargs)
 
         # Set hyperparameters using the model's parameter dictionary
         self.parameters = self._model.get_params()

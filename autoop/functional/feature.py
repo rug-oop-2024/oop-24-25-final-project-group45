@@ -6,32 +6,29 @@ import pandas as pd
 
 def detect_feature_types(dataset: Dataset) -> List[Feature]:
     """
-    Detect the type of each feature in the dataset as either categorical or numerical.
-    Binary numeric columns are considered categorical.
+    Identify each column type in the dataset as either categorical or numerical.
+    Columns with binary values (e.g., 0 and 1) are categorized as categorical.
 
     Args:
-        dataset (Dataset): The dataset to analyze.
+        dataset (Dataset): The dataset to evaluate.
 
     Returns:
-        List[Feature]: A list of Feature objects, each with a name and a detected type.
+        List[Feature]: A list of Feature objects, each containing the column's
+        name and its inferred type.
     """
-    df = dataset.read()
+    data_frame = dataset.read()
+    feature_list = []
 
-    features = []
-
-    for column_name in df.columns:
-        if pd.api.types.is_numeric_dtype(df[column_name]):
-            # Check if it's binary (two unique values, e.g., 0 and 1)
-            unique_values = df[column_name].unique()
-            if len(unique_values) == 2 and sorted(unique_values) in [[0, 1], [1, 0]]:
-                feature_type = "categorical"  # Treat binary numeric as categorical
+    for col_name in data_frame.columns:
+        if pd.api.types.is_numeric_dtype(data_frame[col_name]):
+            unique_vals = data_frame[col_name].unique()
+            if len(unique_vals) == 2 and set(unique_vals) == {0, 1}:
+                col_type = "categorical"
             else:
-                feature_type = "numerical"
+                col_type = "numerical"
         else:
-            feature_type = "categorical"
+            col_type = "categorical"
 
-        # Create a Feature object with the detected type
-        feature = Feature(name=column_name, type=feature_type)
-        features.append(feature)
+        feature_list.append(Feature(col_name, col_type))
 
-    return features
+    return feature_list
