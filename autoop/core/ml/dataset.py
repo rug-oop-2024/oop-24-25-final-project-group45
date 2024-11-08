@@ -7,7 +7,7 @@ import io
 class Dataset(Artifact):
     """A class to represent an ML dataset"""
     def __init__(self, *args, **kwargs):
-        super().__init__(type="dataset", *args, **kwargs)
+        super().__init__(artifact_type="dataset", *args, **kwargs)
 
     @staticmethod
     def from_dataframe(data: pd.DataFrame, name: str,

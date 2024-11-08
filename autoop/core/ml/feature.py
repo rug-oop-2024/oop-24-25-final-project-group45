@@ -1,12 +1,20 @@
+class Feature:
+    """Represents a feature, either categorical or numerical, within a dataset."""
 
-from pydantic import BaseModel, Field
-from typing import Literal
-import numpy as np
+    def __init__(self, name: str, column_type: str):
+        """Initialize a feature with its name and type.
 
-from autoop.core.ml.dataset import Dataset
+        Args:
+            name (str): The feature's name.
+            column_type (str): Type of the feature, either 'categorical' or 'numerical'.
+        """
+        self.name = name
+        self.type = column_type
 
-class Feature(BaseModel):
-    # attributes here
+    def __str__(self) -> str:
+        """Provide a string representation of the feature's name and type.
 
-    def __str__(self):
-        raise NotImplementedError("To be implemented.")
+        Returns:
+            str: Formatted string indicating the feature's name and type.
+        """
+        return f"{self.name} [{self.type}]"
