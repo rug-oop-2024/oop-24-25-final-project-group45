@@ -22,8 +22,7 @@ class MultinomialLogisticRegression(Model):
         self._check_fit_requirements(observations, ground_truth)
         self._model = LogisticRegression(multi_class="auto")
         self._model.fit(observations, ground_truth)
-        params = self._model.get_params()
-        self._parameters = params
+        self.parameters = self._model.get_params()
 
     def predict(self, observations: np.ndarray) -> np.ndarray:
         """Generate predictions for the given observations.
@@ -34,5 +33,6 @@ class MultinomialLogisticRegression(Model):
         Returns:
             np.ndarray: Predicted values for each observation in X.
         """
+        self._check_predict_requirements(observations)
         predictions = self._model.predict(observations)
         return predictions
