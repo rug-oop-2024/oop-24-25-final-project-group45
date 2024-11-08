@@ -21,7 +21,7 @@ class Pipeline:
         model: Model,
         input_features: List[Feature],
         target_feature: Feature,
-        split_ratio=0.8,
+        split: float = 0.8,
     ):
         """Initialize the pipeline with dataset, model, and configuration.
 
@@ -31,7 +31,7 @@ class Pipeline:
             model (Model): The model to train on the data.
             input_features (List[Feature]): List specifying features.
             target_feature (Feature): The feature to predict.
-            split_ratio (float, optional): Proportion for training data.
+            split (float, optional): Proportion for training data.
                 Defaults to 0.8.
 
         Raises:
@@ -43,7 +43,7 @@ class Pipeline:
         self._target_feature = target_feature
         self._metrics = metrics
         self._artifacts = {}
-        self._split = split_ratio
+        self._split = split
         if (
             target_feature.type == "categorical"
             and model.type != "classification"

@@ -5,7 +5,7 @@ import numpy as np
 
 # Documentation: https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html#sklearn.svm.LinearSVC.predict
 
-class KMeansClustering(Model):
+class SVCLinear(Model):
     def __init__(self):
         super().__init__()
         self._model = None
