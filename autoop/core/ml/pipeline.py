@@ -162,18 +162,17 @@ class Pipeline:
     def _evaluate(self) -> None:
         """Evaluate the model and collect results."""
         self._train_metrics_results, self._metrics_results = [], []
-        predictions = self._model.predict(self._compact_vectors(self._train_X))
+
+        train_predictions = self._model.predict(self._compact_vectors(self._train_X))
         for metric in self._metrics:
             self._train_metrics_results.append(
-                (metric, metric.evaluate(predictions, self._train_y))
+                (metric, metric.compute(train_predictions, self._train_y))
             )
 
-        test_predictions = self._model.predict(
-            self._compact_vectors(self._test_X)
-        )
+        test_predictions = self._model.predict(self._compact_vectors(self._test_X))
         for metric in self._metrics:
             self._metrics_results.append(
-                (metric, metric.evaluate(test_predictions, self._test_y))
+                (metric, metric.compute(test_predictions, self._test_y))
             )
 
         encoder = list(self._artifacts[self._target_feature.name].values())[1]

@@ -1,341 +1,160 @@
 from abc import ABC, abstractmethod
-
 import numpy as np
 
-REGRESSION_METRICS = [
-    "MeanSquaredError",
-    "RSquared",
-    "MeanAbsoluteError",
-]
-
+# Define metric categories for regression and classification
+REGRESSION_METRICS = ["MSE", "MAE", "R2"]
 CLASSIFICATION_METRICS = ["Accuracy", "Precision", "Recall"]
 
-
-def get_metric(name: str) -> "Metric":
-    """Return a metric instance corresponding to the provided name.
+def get_metric(metric_name: str) -> "EvaluationMetric":
+    """Retrieve the metric instance by its name.
 
     Args:
-        name (str): name of the type of evaluation method
+        metric_name (str): Name of the metric to retrieve.
 
     Returns:
-        Metric: The evaluation
+        EvaluationMetric: Instance of the requested metric.
 
+    Raises:
+        ValueError: If the provided metric name is invalid.
     """
-    match name:
-        case "RSquared":
-            return RSquared()
-        case "MeanSquaredError":
-            return MeanSquaredError()
-        case "MeanAbsoluteError":
-            return MeanAbsoluteError()
-        case "Recall":
-            return Recall()
-        case "Accuracy":
-            return Accuracy()
-        case "Precision":
-            return Precision()
+    available_metrics = REGRESSION_METRICS + CLASSIFICATION_METRICS
+    if metric_name not in available_metrics:
+        raise ValueError(
+            f"'{metric_name}' is not recognized. Available metrics:\n"
+            f"{', '.join(available_metrics)}"
+        )
 
+    # Return the relevant metric class based on name
+    if metric_name == "MSE":
+        return MeanSquaredErrorMetric()
+    elif metric_name == "MAE":
+        return MeanAbsoluteErrorMetric()
+    elif metric_name == "R2":
+        return RSquaredMetric()
+    elif metric_name == "Accuracy":
+        return AccuracyMetric()
+    elif metric_name == "Precision":
+        return PrecisionMetric()
+    elif metric_name == "Recall":
+        return RecallMetric()
+
+    raise ValueError(f"No metric found for: '{metric_name}'.")
 
 class Metric(ABC):
-    """Base class for all metrics."""
+    """Abstract base for defining metrics."""
 
-    def __call__(
-        self, predictions: np.ndarray, ground_truth: np.ndarray
-    ) -> float:
-        """Evaluate predictions with the class-defined metric.
+    def __call__(self, predictions: np.ndarray, actual_values: np.ndarray) -> float:
+        """Compute the metric on predictions.
 
         Args:
-            predictions (np.ndarray): Predicted values
-            ground_truth (np.ndarray): True vales
+            predictions (np.ndarray): Array of predicted values.
+            actual_values (np.ndarray): Array of true values.
 
         Returns:
-            float: The value of the evaluated metric.
+            float: Calculated metric value.
         """
-        return self.evaluate(predictions, ground_truth)
+        return self.compute(predictions, actual_values)
 
     @abstractmethod
-    def evaluate(
-        self, predictions: np.ndarray, ground_truth: np.ndarray
-    ) -> float:
-        """Evaluate the model based on the given metric.
-
-        Args:
-            predictions (np.ndarray): Predicted values
-            ground_truth (np.ndarray): True vales
-
-        Returns:
-            float: The value of the evaluated metric.
-        """
+    def compute(self, predictions: np.ndarray, actual_values: np.ndarray) -> float:
+        """Compute the specific metric on predictions."""
         pass
 
-    def _check_dimensions(
-        self, predictions: np.ndarray, ground_truth: np.ndarray
-    ) -> None:
-        """Check if the predictions and ground_truth have the right dimensions.
+    def _validate_inputs(self, predictions: np.ndarray, actual_values: np.ndarray) -> None:
+        """Validate that prediction and actual values arrays match in length.
 
         Args:
-            predictions (np.ndarray): Predicted values
-            ground_truth (np.ndarray): True vales
+            predictions (np.ndarray): Predictions.
+            actual_values (np.ndarray): True values.
 
         Raises:
-            ValueError: If the number of predictions does not equal the number
-                of ground truth labels.
-            ValueError: If there are no predictions or ground_truths.
+            ValueError: If arrays differ in length or are empty.
         """
-        if len(predictions) != len(ground_truth):
+        if len(predictions) != len(actual_values):
             raise ValueError(
-                f"The number of predictions ({len(predictions)}) must equal ",
-                f"the number of ground truth labels ({len(ground_truth)}).",
+                f"Mismatch in lengths: predictions ({len(predictions)}) vs actual values ({len(actual_values)})."
             )
         if len(predictions) == 0:
+            raise ValueError("Predictions and actual values cannot be empty.")
+
+class MeanSquaredErrorMetric(Metric):
+    """Metric for Mean Squared Error in regression."""
+
+    def compute(self, predictions: np.ndarray, actual_values: np.ndarray) -> float:
+        """Compute MSE by averaging squared differences."""
+        self._validate_inputs(predictions, actual_values)
+        return float(np.mean((actual_values - predictions) ** 2))
+
+class MeanAbsoluteErrorMetric(Metric):
+    """Metric for Mean Absolute Error in regression."""
+
+    def compute(self, predictions: np.ndarray, actual_values: np.ndarray) -> float:
+        """Compute MAE by averaging absolute differences."""
+        self._validate_inputs(predictions, actual_values)
+        return float(np.mean(np.abs(predictions - actual_values)))
+
+class RSquaredMetric(Metric):
+    """Metric for R-squared in regression."""
+
+    def compute(self, predictions: np.ndarray, actual_values: np.ndarray) -> float:
+        """Calculate R^2, representing explained variance."""
+        self._validate_inputs(predictions, actual_values)
+        ss_residuals = np.sum((actual_values - predictions) ** 2)
+        ss_total = np.sum((actual_values - np.mean(actual_values)) ** 2)
+        return float(1 - ss_residuals / ss_total) if ss_total != 0 else float("nan")
+
+class AccuracyMetric(Metric):
+    """Metric for Accuracy in classification."""
+
+    def compute(self, predictions: np.ndarray, actual_values: np.ndarray) -> float:
+        """Compute accuracy as the fraction of correct predictions."""
+        self._validate_inputs(predictions, actual_values)
+
+        # Flatten one-hot encoded arrays, if applicable
+        if predictions.ndim > 1:
+            predictions = np.argmax(predictions, axis=1)
+        if actual_values.ndim > 1:
+            actual_values = np.argmax(actual_values, axis=1)
+
+        # Ensure the arrays have compatible shapes for comparison
+        if predictions.shape != actual_values.shape:
             raise ValueError(
-                "Predictions and ground truth arrays cannot be empty."
+                f"Incompatible shapes for accuracy computation: predictions {predictions.shape}, actual_values {actual_values.shape}"
             )
 
-
-class MeanAbsoluteError(Metric):
-    """Mean absolute error class"""
-
-    def evaluate(
-        self, predictions: np.ndarray, ground_truth: np.ndarray
-    ) -> float:
-        """Evaluate the model's mean absolute error.
-
-        Measures the average size of mistakes in a collection of predictions.
-
-        Args:
-            predictions (np.ndarray): Predicted values
-            ground_truth (np.ndarray): True vales
-
-        Returns:
-            float: The mean absolute error of the model.
-        """
-        self._check_dimensions(predictions, ground_truth)
-
-        absolute_errors = np.abs(predictions - ground_truth)
-        mean_absolute_error = np.mean(absolute_errors)
-        return float(mean_absolute_error)
-
-
-class RSquared(Metric):
-    """Rsquared class."""
-
-    def evaluate(
-        self, predictions: np.ndarray, ground_truth: np.ndarray
-    ) -> float:
-        """Evaluate the model's rsquared value.
-
-        Measures the proportion of variance that can be explained
-        by the independent variables.
-
-        Args:
-            predictions (np.ndarray): Predicted values
-            ground_truth (np.ndarray): True vales
-
-        Returns:
-            float: The proportion of variance that can be explained
-                by the independent variables of the model between -∞ and 1.
-        """
-        self._check_dimensions(predictions, ground_truth)
-
-        residual_sum_of_squares = np.sum((ground_truth - predictions) ** 2)
-        sum_of_squares_total = np.sum(
-            (ground_truth - np.mean(ground_truth)) ** 2
-        )
-        if sum_of_squares_total == 0:
-            return float("nan")
-
-        return float(1 - residual_sum_of_squares / sum_of_squares_total)
-
-
-class MeanSquaredError(Metric):
-    """Mean squared error class."""
-
-    def evaluate(
-        self, predictions: np.ndarray, ground_truth: np.ndarray
-    ) -> float:
-        """Calculate average squared distance from ground_truth.
-
-        Args:
-            predictions (np.ndarray): Predicted values
-            ground_truth (np.ndarray): True vales
-
-        Returns:
-            float: The mean squared error of the model
-        """
-        self._check_dimensions(predictions, ground_truth)
-
-        squared_errors = (ground_truth - predictions) ** 2
-        mse = np.mean(squared_errors)
-        return float(mse)
-
-
-class Recall(Metric):
-    """Recall class."""
-
-    def evaluate(
-        self, predictions: np.ndarray, ground_truth: np.ndarray
-    ) -> float:
-        """Evaluate the model's recall ability.
-
-        Measures the classifier's ability to find all correct predictions for
-        each label. Recall = True positive / (True positive + False negative)
-
-        Args:
-            predictions (np.ndarray): An array of prediction labels
-            ground_truth (np.ndarray): An array with the ground_truth labels
-                (Must match number of predictions)
-
-        Returns:
-            float: The recall of the model between 0 and 1
-        """
-        self._check_dimensions(predictions, ground_truth)
-
-        if ground_truth.ndim > 1:
-            # The ground_truth is one-hot-encoded so get labels
-            ground_truth = np.argmax(ground_truth, axis=1)
-
-        unique_labels = np.unique(ground_truth)
-        num_unique_labels = len(unique_labels)
-
-        total_recall = 0.0
-
-        for unique_label in unique_labels:
-            total_recall += self._calculate_label_recall(
-                unique_label, predictions, ground_truth
-            )
-
-        return float(total_recall / num_unique_labels)
-
-    def _calculate_label_recall(
-        self,
-        unique_label: int | str,
-        predictions: np.ndarray,
-        ground_truth: np.ndarray,
-    ) -> float:
-        """Evaluate the model's recall of one label.
-
-        Recall = True positive / (True positive + False negative)
-
-        Args:
-            unique_label (int | str): The label for which the models recall
-                needs to be calculated.
-            predictions (np.ndarray): An array of prediction labels
-            ground_truth (np.ndarray): An array with the ground_truth labels
-                (Must match number of predictions)
-
-        Returns:
-            float: The recall of the model between 0 and 1 of one label.
-        """
-        # Create boolean arrays that indicate matches for the unique label
-        # in both predictions and ground truth.
-        match_gt = ground_truth == unique_label
-        match_pred = predictions == unique_label
-
-        # Count the true positives and false negatives using the arrays.
-        tp = np.sum(match_gt & match_pred)
-        fn = np.sum(match_gt & ~match_pred)
-
-        # Avoid dividing by zero
-        if tp + fn > 0:
-            return float(tp / (tp + fn))
-
-        return 0.0
-
-
-class Precision(Metric):
-    """Precision class"""
-
-    def evaluate(
-        self, predictions: np.ndarray, ground_truth: np.ndarray
-    ) -> float:
-        """Evaluate the model's precision.
-
-        Measures the accuracy of positive predictions for each label.
-        Precision = True positive / (True positive + False positive)
-
-        Args:
-            predictions (np.ndarray): An array of prediction labels
-            ground_truth (np.ndarray): An array with the ground_truth labels
-                (Must match number of predictions)
-
-        Returns:
-            float: The precision of the model between 0 and 1
-        """
-        self._check_dimensions(predictions, ground_truth)
-
-        if ground_truth.ndim > 1:
-            ground_truth = np.argmax(ground_truth, axis=1)
-
-        unique_labels = np.unique(ground_truth)
-        num_unique_labels = len(unique_labels)
-
-        total_precision = 0.0
-
-        for unique_label in unique_labels:
-            total_precision += self._calculate_label_precision(
-                unique_label, predictions, ground_truth
-            )
-
-        return float(total_precision / num_unique_labels)
-
-    def _calculate_label_precision(
-        self,
-        unique_label: int | str,
-        predictions: np.ndarray,
-        ground_truth: np.ndarray,
-    ) -> float:
-        """Evaluate the model's precision of one label.
-
-        Precision = True positive / (True positive + False positive)
-
-        Args:
-            unique_label (int | str): The label for which the models precision
-                needs to be calculated.
-            predictions (np.ndarray): An array of prediction labels
-            ground_truth (np.ndarray): An array with the ground_truth labels
-                (Must match number of predictions)
-
-        Returns:
-            float: The precision of the model between 0 and 1 of one label.
-        """
-        match_gt = ground_truth == unique_label
-        match_pred = predictions == unique_label
-
-        tp = np.sum(match_gt & match_pred)
-        fp = np.sum(~match_gt & match_pred)
-
-        # Avoid dividing by zero
-        if tp + fp > 0:
-            return float(tp / (tp + fp))
-
-        return 0.0
-
-
-class Accuracy(Metric):
-    """Accuracy class"""
-
-    def evaluate(
-        self, predictions: np.ndarray, ground_truth: np.ndarray
-    ) -> float:
-        """Evaluate the model's accuracy.
-
-        Measures the ratio of correct predictions.
-        Number of correct predictions / Total number of predictions.
-
-        Args:
-            predictions (np.ndarray): An array of prediction labels
-            ground_truth (np.ndarray): An array with the ground_truth labels.
-                (Must match number of predictions)
-
-        Returns:
-            float: The accuracy of the model between 0 and 1
-        """
-        self._check_dimensions(predictions, ground_truth)
-
-        # If ground_truth is one-hot-encoded get the correct labels
-        if ground_truth.ndim > 1:
-            ground_truth = np.argmax(ground_truth, axis=1)
-
-        correct_predictions = np.sum(predictions == ground_truth)
-        return float(correct_predictions / len(predictions))
+        correct_preds = np.sum(predictions == actual_values)
+        return float(correct_preds / len(predictions))
+
+class PrecisionMetric(Metric):
+    """Metric for Precision in classification."""
+
+    def compute(self, predictions: np.ndarray, actual_values: np.ndarray) -> float:
+        """Compute precision as true positives over total positives."""
+        self._validate_inputs(predictions, actual_values)
+        if actual_values.ndim > 1:
+            actual_values = np.argmax(actual_values, axis=1)
+        unique_labels = np.unique(actual_values)
+        return float(np.mean([self._precision_for_label(predictions, actual_values, label) for label in unique_labels]))
+
+    def _precision_for_label(self, predictions: np.ndarray, actual_values: np.ndarray, label: int) -> float:
+        """Helper to calculate precision for a specific label."""
+        tp = np.sum((predictions == label) & (actual_values == label))
+        fp = np.sum((predictions == label) & (actual_values != label))
+        return float(tp / (tp + fp)) if (tp + fp) > 0 else 0.0
+
+class RecallMetric(Metric):
+    """Metric for Recall in classification."""
+
+    def compute(self, predictions: np.ndarray, actual_values: np.ndarray) -> float:
+        """Compute recall as true positives over total actual positives."""
+        self._validate_inputs(predictions, actual_values)
+        if actual_values.ndim > 1:
+            actual_values = np.argmax(actual_values, axis=1)
+        unique_labels = np.unique(actual_values)
+        return float(np.mean([self._recall_for_label(predictions, actual_values, label) for label in unique_labels]))
+
+    def _recall_for_label(self, predictions: np.ndarray, actual_values: np.ndarray, label: int) -> float:
+        """Helper to calculate recall for a specific label."""
+        tp = np.sum((predictions == label) & (actual_values == label))
+        fn = np.sum((predictions != label) & (actual_values == label))
+        return float(tp / (tp + fn)) if (tp + fn) > 0 else 0.0

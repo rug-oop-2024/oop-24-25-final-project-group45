@@ -61,7 +61,6 @@ class KNearestNeighbors(Model):
             ground_truths (np.ndarray): Ground_truths corresponding to the
                 observations used to train the model. Row dimension is samples.
         """
-        self._check_fit_requirements(observations, ground_truths)
 
         if self.k > observations.shape[0]:
             raise ValueError(

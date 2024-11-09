@@ -29,7 +29,6 @@ class Lasso(Model):
             ground_truths (np.ndarray): Ground_truths corresponding to the
                 observations used to train the model. Row dimension is samples.
         """
-        self._check_fit_requirements(observations, ground_truths)
 
         self._model.fit(observations, ground_truths)
 
