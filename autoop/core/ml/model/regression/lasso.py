@@ -1,37 +1,39 @@
 import numpy as np
 from sklearn.linear_model import Lasso as SkLasso
-
 from autoop.core.ml.model.model import Model
 
 
 class Lasso(Model):
-    """A Lasso implementation of the Model class."""
+    """Lasso regression model as an implementation of the base Model class."""
 
     def __init__(self, *args, alpha=0.01, **kwargs) -> None:
-        """Initialize the lasso model with the provided parameters.
+        """Initialize the Lasso regression model with specified parameters.
 
         Args:
-            *args: Positional arguments for Lasso's parameters.
-            **kwargs: Keyword arguments for Lasso's parameters.
+            alpha (float): Regularization strength; must be a positive float.
+            *args: Additional positional arguments for the Lasso model.
+            **kwargs: Additional keyword arguments for model configuration.
         """
         super().__init__()
         self._model = SkLasso(*args, alpha=alpha, **kwargs)
-        new_parameters = self._model.get_params()
-        self.parameters = new_parameters
+        self.parameters = self._model.get_params()
         self.type = "regression"
 
-    def fit(self, observations: np.ndarray, ground_truths: np.ndarray) -> None:
-        """Use the observations and ground_truths to train the Lasso model.
+    def fit(self, observations: np.ndarray, ground_truth: np.ndarray) -> None:
+        """Train the Lasso model with input data and
+        corresponding target values.
 
         Args:
-            observations (np.ndarray): Observations used to train the model.
-                Row dimension is samples, column dimension is variables.
-            ground_truths (np.ndarray): Ground_truths corresponding to the
-                observations used to train the model. Row dimension is samples.
+            observations (np.ndarray): Array of training samples with
+            features as columns.
+            ground_truth (np.ndarray): Array of target values for each
+            training sample.
+
+        Updates:
+            self.parameters: Stores fitted coefficients and
+            intercept after training.
         """
-
-        self._model.fit(observations, ground_truths)
-
+        self._model.fit(observations, ground_truth)
         self.parameters = {
             "coefficients": np.array(self._model.coef_),
             "intercept": np.atleast_1d(self._model.intercept_),
@@ -40,14 +42,14 @@ class Lasso(Model):
         self._n_features = observations.shape[1]
 
     def predict(self, observations: np.ndarray) -> np.ndarray:
-        """Use the model to predict values for observations.
+        """Generate predictions for new input data based on the trained model.
 
         Args:
-            observations (np.ndarray): The observations which need predictions.
-                Row dimension is samples, column dimension is variables.
+            observations (np.ndarray): Array of samples needing predictions,
+            with features as columns.
 
         Returns:
-            np.ndarray: Predicted values for the observations.
-                Formatted like [[value],[value]].
+            np.ndarray: Predicted values for each sample, in a
+            column vector format.
         """
         return self._model.predict(observations).reshape(-1, 1)

@@ -28,14 +28,11 @@ class DecisionTreeModel(Model):
             ground_truths (np.ndarray): Ground truths corresponding to the
                 observations used to train the model. Row dimension is samples.
         """
-        # Convert one-hot-encoded labels to single label indices if necessary
         if ground_truths.ndim > 1:
             ground_truths = np.argmax(ground_truths, axis=1)
 
-        # Train the model
         self._model.fit(observations, ground_truths)
 
-        # Update parameters with feature importances after training
         self.parameters = {
             "feature_importances": np.array(self._model.feature_importances_),
             "max_depth": self._model.tree_.max_depth,
@@ -57,17 +54,3 @@ class DecisionTreeModel(Model):
             np.ndarray: Predicted classes for each observation.
         """
         return self._model.predict(observations)
-
-    def predict_proba(self, observations: np.ndarray) -> np.ndarray:
-        """Predict class probabilities for the given observations.
-
-        Args:
-            observations (np.ndarray): The observations for which to
-            predict probabilities.
-                Row dimension is samples, column dimension is variables.
-
-        Returns:
-            np.ndarray: Predicted probabilities for each class
-            in each observation.
-        """
-        return self._model.predict_proba(observations)

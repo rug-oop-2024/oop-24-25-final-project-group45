@@ -76,14 +76,12 @@ class Database:
 
     def _save_data(self) -> None:
         """Persist data to storage backend."""
-        # Save or update current data in storage
         for collection, items in self._data.items():
             for data_id, entry in items.items():
                 self._storage.save(
                     json.dumps(entry).encode(), f"{collection}/{data_id}"
                 )
 
-        # Remove stale items from storage if they don't exist in memory
         existing_keys = set(self._storage.list(""))
         memory_keys = {
             f"{coll}/{id}"

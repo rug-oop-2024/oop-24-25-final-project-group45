@@ -4,151 +4,153 @@ from glob import glob
 from typing import List
 
 
-class NotFoundError(Exception):
-    """The class used to raise a custom error."""
+class PathNotFoundError(Exception):
+    """Custom error for handling missing paths in storage operations."""
 
     def __init__(self, path: str) -> None:
-        """Initialize the error.
+        """Raise error when a specified path is missing.
 
         Args:
-            path (str): The path towards a certain file.
+            path (str): Path that was not found.
         """
-        super().__init__(f"Path not found: {path}")
+        super().__init__(f"Specified path does not exist: {path}")
 
 
 class Storage(ABC):
-    """An abstract base class that functions as blueprint for other classes."""
+    """Abstract storage interface to define data operations."""
 
     @abstractmethod
     def save(self, data: bytes, path: str) -> None:
-        """Save data to a given path.
+        """Store data at the designated path.
 
         Args:
-            data (bytes): Data to save
-            path (str): Path to save data
+            data (bytes): The binary data to be saved.
+            path (str): Path where data will be stored.
         """
         pass
 
     @abstractmethod
     def load(self, path: str) -> bytes:
-        """Load data from a given path.
+        """Retrieve data from a specific path.
 
         Args:
-            path (str): Path to load data
+            path (str): Path to retrieve data from.
+
         Returns:
-            bytes: Loaded data
+            bytes: Data read from the specified path.
         """
         pass
 
     @abstractmethod
     def delete(self, path: str) -> None:
-        """Delete data at a given path.
+        """Remove data at the specified path.
 
         Args:
-            path (str): Path to delete data
+            path (str): Path to the data for deletion.
         """
         pass
 
     @abstractmethod
-    def list(self, path: str) -> list:
-        """List all paths under a given path.
+    def list(self, path: str) -> List[str]:
+        """List all files under a directory path.
 
         Args:
-            path (str): Path to list
+            path (str): Directory path to search.
+
         Returns:
-            list: List of paths
+            List[str]: Filenames located under the specified path.
         """
         pass
 
 
 class LocalStorage(Storage):
-    """Class for handling data storage."""
+    """Local file-based storage for managing file operations."""
 
-    def __init__(self, base_path: str = "./assets") -> None:
-        """Initialize the local storage in the given base_path.
+    def __init__(self, base_directory: str = "./data_storage") -> None:
+        """Set up a local storage instance at the given base path.
 
         Args:
-            base_path (str, optional): The location where to store the data.
-                Defaults to "./assets".
+            base_directory (str, optional): Base directory path for storage.
+                Defaults to "./data_storage".
         """
-        self._base_path = os.path.normpath(base_path)
-        if not os.path.exists(self._base_path):
-            os.makedirs(self._base_path)
+        self.base_directory = os.path.normpath(base_directory)
+        if not os.path.exists(self.base_directory):
+            os.makedirs(self.base_directory)
 
-    def save(self, data: bytes, key: str) -> None:
-        """Save the data in the directory with key as filename.
+    def save(self, data: bytes, filename: str) -> None:
+        """Write binary data to a file in the base directory.
 
         Args:
-            data (bytes): The data to be stored in bytes.
-            key (str): The name of file where it should be stored.
+            data (bytes): Data to be saved.
+            filename (str): Filename within the base directory.
         """
-        path = self._join_path(key)
-        if not os.path.exists(path):
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "wb") as f:
-            f.write(data)
+        full_path = self._construct_path(filename)
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "wb") as file:
+            file.write(data)
 
-    def load(self, key: str) -> bytes:
-        """Load the data in the directory with key as filename.
+    def load(self, filename: str) -> bytes:
+        """Read binary data from a file.
 
         Args:
-            key (str): The name of the file where the data is stored.
+            filename (str): File name to read data from.
 
         Returns:
-            bytes: The data that was stored in the file.
+            bytes: Binary data stored in the file.
         """
-        path = self._join_path(key)
-        self._assert_path_exists(path)
-        with open(path, "rb") as f:
-            return f.read()
+        full_path = self._construct_path(filename)
+        self._ensure_path_exists(full_path)
+        with open(full_path, "rb") as file:
+            return file.read()
 
-    def delete(self, key: str = "/") -> None:
-        """Delete the file with key as filename.
+    def delete(self, filename: str = "/") -> None:
+        """Remove a file from the storage.
 
         Args:
-            key (str, optional): The name of the file. Defaults to "/".
+            filename (str, optional): Filename to delete. Defaults to "/".
         """
-        path = self._join_path(key)
-        self._assert_path_exists(path)
-        os.remove(path)
+        full_path = self._construct_path(filename)
+        self._ensure_path_exists(full_path)
+        os.remove(full_path)
 
-    def list(self, prefix: str = "/") -> List[str]:
-        """List all files in the given directory.
+    def list(self, directory_prefix: str = "/") -> List[str]:
+        """Get a list of files in a directory under base storage.
 
         Args:
-            prefix (str): The directory where files can be stored.
+            directory_prefix (str): Directory prefix to start file search.
 
         Returns:
-            List[str]: A list of valid filenames in the directory.
+            List[str]: List of file paths relative to base directory.
         """
-        path = self._join_path(prefix)
-        self._assert_path_exists(path)
-        keys = glob(os.path.join(path, "**", "*"), recursive=True)
+        full_path = self._construct_path(directory_prefix)
+        self._ensure_path_exists(full_path)
+        file_paths = glob(os.path.join(full_path, "**", "*"), recursive=True)
         return [
-            os.path.relpath(p, self._base_path)
-            for p in keys
-            if os.path.isfile(p)
+            os.path.relpath(path, self.base_directory)
+            for path in file_paths
+            if os.path.isfile(path)
         ]
 
-    def _assert_path_exists(self, path: str) -> None:
-        """Check if the path exists.
+    def _ensure_path_exists(self, path: str) -> None:
+        """Validate existence of a given path.
 
         Args:
-            path (str): The path to be checked.
+            path (str): Path to verify.
 
         Raises:
-            NotFoundError: If the path does not exist.
+            PathNotFoundError: Raised if path is not found.
         """
         if not os.path.exists(path):
-            raise NotFoundError(path)
+            raise PathNotFoundError(path)
 
-    def _join_path(self, path: str) -> str:
-        """Create a path from the base_path towards the new file.
+    def _construct_path(self, path_fragment: str) -> str:
+        """Build full path by combining base directory with a path fragment.
 
         Args:
-            path (str): The name of the file to be added to the directory.
+            path_fragment (str): File or directory name to append to base.
 
         Returns:
-            str: The path towards the new file in the directory.
+            str: Full constructed path.
         """
-        return os.path.normpath(os.path.join(self._base_path, path))
+        return os.path.normpath(os.path.join(self.base_directory,
+                                             path_fragment))
