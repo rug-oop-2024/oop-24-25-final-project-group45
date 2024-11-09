@@ -1,5 +1,6 @@
 import base64
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
 
 class Artifact:
     """Represents a digital asset with metadata and data storage."""
@@ -23,16 +24,17 @@ class Artifact:
             asset_path (Optional[str]): Path for the artifact asset.
             version (Optional[str]): Version of the artifact.
             tags (Optional[List[str]]): Tags for categorizing the artifact.
-            metadata (Optional[Dict[str, str]]): Metadata associated with the artifact.
+            metadata (Optional[Dict[str, str]]): Metadata associated with
+            the artifact.
         """
+        self.metadata = metadata or {}
         self.name = name
         self.data = data
         self.type = artifact_type or "other"
         self.asset_path = asset_path or name
         self.version = version or "1.0.0"
-        self.tags = tags or []
-        self.metadata = metadata or {}
         self.id = f"{self._encode_base64(self.asset_path)}-{self.version}"
+        self.tags = tags or []
 
     def save_data(self, new_data: bytes) -> bytes:
         """Save new data to the artifact and return it.

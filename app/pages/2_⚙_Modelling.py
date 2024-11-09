@@ -1,6 +1,9 @@
 import io
 from math import ceil
 
+import pandas as pd
+import streamlit as st
+
 from app.core.system import AutoMLSystem
 from autoop.core.ml.dataset import Dataset
 from autoop.core.ml.metric import (
@@ -15,9 +18,6 @@ from autoop.core.ml.model import (
 )
 from autoop.core.ml.pipeline import Pipeline
 from autoop.functional.feature import detect_feature_types
-
-import pandas as pd
-import streamlit as st
 
 MIN_TRAINING_SAMPLES = 3
 
@@ -35,8 +35,8 @@ for key in ["result", "executed_pipeline", "active_pipeline", "result_data"]:
 
 st.write("# ⚙ Modelling")
 display_helper_text(
-    "In this section, you can design a " +
-    "machine learning pipeline to train a model on a dataset."
+    "In this section, you can design a "
+    + "machine learning pipeline to train a model on a dataset."
 )
 
 automl = AutoMLSystem.get_instance()
@@ -74,42 +74,65 @@ if dataset_name:
     feature_list = detect_feature_types(updated_dataset)
     st.write("## Feature Selection:")
 
-    target_column = st.selectbox("Select target column for prediction:", feature_list, index=None)
+    target_column = st.selectbox(
+        "Select target column for prediction:", feature_list, index=None
+    )
     if target_column:
-        input_columns = [f for f in feature_list if f.name != target_column.name]
+        input_columns = [
+            f for f in feature_list if f.name != target_column.name
+        ]
         st.write(f"Target column: {target_column.name}")
 
-        selected_inputs = st.multiselect("Choose input columns for model:", input_columns)
+        selected_inputs = st.multiselect(
+            "Choose input columns for model:", input_columns
+        )
         if selected_inputs:
             features_chosen = True
-            st.write("Selected Columns:", ", ".join(feat.name for feat in selected_inputs))
+            st.write(
+                "Selected Columns:",
+                ", ".join(feat.name for feat in selected_inputs),
+            )
 
         target_type = target_column.type
         st.write("## Model Selection:")
 
         if target_type == "numerical":
             st.write("Detected task: Regression")
-            selected_model = st.selectbox("Choose model to use:", REGRESSION_MODELS)
+            selected_model = st.selectbox(
+                "Choose model to use:", REGRESSION_MODELS
+            )
             model_instance = get_model(selected_model)
             if model_instance:
                 model_chosen = True
 
-            analysis_metrics = [get_metric(m) for m in st.multiselect("Select metrics:", REGRESSION_METRICS)]
+            analysis_metrics = [
+                get_metric(m)
+                for m in st.multiselect("Select metrics:", REGRESSION_METRICS)
+            ]
             metrics_chosen = bool(analysis_metrics)
 
         elif target_type == "categorical":
             st.write("Detected task: Classification")
-            selected_model = st.selectbox("Choose model to use:", CLASSIFICATION_MODELS)
+            selected_model = st.selectbox(
+                "Choose model to use:", CLASSIFICATION_MODELS
+            )
             model_instance = get_model(selected_model)
             if model_instance:
                 model_chosen = True
 
-            analysis_metrics = [get_metric(m) for m in st.multiselect("Select metrics:", CLASSIFICATION_METRICS)]
+            analysis_metrics = [
+                get_metric(m)
+                for m in st.multiselect(
+                    "Select metrics:", CLASSIFICATION_METRICS
+                )
+            ]
             metrics_chosen = bool(analysis_metrics)
 
 if model_chosen and metrics_chosen and features_chosen:
     min_ratio = ceil(MIN_TRAINING_SAMPLES / len(loaded_data) * 100) / 100
-    train_ratio = st.slider("Select proportion of data for training:", min_ratio, 0.99, 0.80)
+    train_ratio = st.slider(
+        "Select proportion of data for training:", min_ratio, 0.99, 0.80
+    )
 
     model_pipeline = Pipeline(
         metrics=analysis_metrics,
@@ -123,12 +146,23 @@ if model_chosen and metrics_chosen and features_chosen:
     st.write("## Pipeline Summary:")
     st.write("- **Dataset**:", updated_dataset.name)
     st.write("- **Target Column**:", target_column.name)
-    st.write("- **Input Columns**:", ", ".join(feat.name for feat in selected_inputs))
+    st.write(
+        "- **Input Columns**:",
+        ", ".join(feat.name for feat in selected_inputs),
+    )
     st.write("- **Model**:", model_instance.__class__.__name__)
-    st.write("- **Metrics**:", ", ".join(metric.__class__.__name__ for metric in analysis_metrics))
+    st.write(
+        "- **Metrics**:",
+        ", ".join(metric.__class__.__name__ for metric in analysis_metrics),
+    )
     st.write("- **Training Ratio**:", f"{train_ratio:.0%} of data")
 
-    max_predictions = st.number_input("Specify max predictions to display (0=all):", min_value=0, value=50, step=1)
+    max_predictions = st.number_input(
+        "Specify max predictions to display (0=all):",
+        min_value=0,
+        value=50,
+        step=1,
+    )
 
     if st.button("Run Pipeline"):
         st.session_state.result_data = model_pipeline.execute()

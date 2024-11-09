@@ -2,7 +2,9 @@ import pickle
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Any
+
 import numpy as np
+
 from autoop.core.ml.artifact import Artifact
 
 

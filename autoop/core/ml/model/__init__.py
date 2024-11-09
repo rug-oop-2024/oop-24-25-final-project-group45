@@ -1,11 +1,13 @@
 from typing import TYPE_CHECKING
 
+from autoop.core.ml.model.classification.decision_tree_classifier import (
+    DecisionTreeModel,
+)
 from autoop.core.ml.model.classification.k_nearest_neighbors import (
     KNearestNeighbors,
 )
-from autoop.core.ml.model.classification.logistic_regression import LogisticRegressor
-from autoop.core.ml.model.classification.decision_tree_classifier import (
-    DecisionTreeModel,
+from autoop.core.ml.model.classification.logistic_regression import (
+    LogisticRegressor,
 )
 
 if TYPE_CHECKING:
@@ -15,7 +17,9 @@ from autoop.core.ml.model.regression.lasso import Lasso
 from autoop.core.ml.model.regression.multiple_linear_regression import (
     MultipleLinearRegression,
 )
-from autoop.core.ml.model.regression.support_vector_regression import SupportVectorRegressor
+from autoop.core.ml.model.regression.support_vector_regression import (
+    SupportVectorRegressor,
+)
 
 REGRESSION_MODELS = [
     "MultipleLinearRegression",

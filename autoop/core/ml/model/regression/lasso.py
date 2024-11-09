@@ -1,7 +1,7 @@
-from autoop.core.ml.model.model import Model
-
 import numpy as np
 from sklearn.linear_model import Lasso as SkLasso
+
+from autoop.core.ml.model.model import Model
 
 
 class Lasso(Model):

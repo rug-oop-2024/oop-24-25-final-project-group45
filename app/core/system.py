@@ -1,10 +1,10 @@
 from typing import List
 
+import streamlit as st
+
 from autoop.core.database import Database
 from autoop.core.ml.artifact import Artifact
 from autoop.core.storage import LocalStorage, Storage
-
-import streamlit as st
 
 
 class ArtifactRegistry:

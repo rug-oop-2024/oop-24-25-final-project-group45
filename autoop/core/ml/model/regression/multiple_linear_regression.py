@@ -1,10 +1,10 @@
-from autoop.core.ml.model.model import Model
 import numpy as np
+from autoop.core.ml.model.model import Model
 from sklearn.linear_model import LinearRegression
 
 
 class MultipleLinearRegression(Model):
-    """Multiple Linear Regression model using sklearn library"""
+    """Multiple Linear Regression model using sklearn library."""
 
     def __init__(self, *args, **kwargs):
         """Initialize object with optional parameters."""
@@ -18,15 +18,19 @@ class MultipleLinearRegression(Model):
         """Fit the regression model with observations and ground truths.
 
         Args:
-            observations (np.ndarray): Observations matrix (samples x variables).
-            ground_truth (np.ndarray): Ground truths vector corresponding to X (samples).
+            observations (np.ndarray): Observations matrix
+            (samples x variables).
+            ground_truth (np.ndarray): Ground truths vector
+            corresponding to X (samples).
         """
         self._model.fit(observations, ground_truth)
 
-        self.parameters.update({
-            "coefficients": np.array(self._model.coef_),
-            "intercept": np.atleast_1d(self._model.intercept_),
-        })
+        self.parameters.update(
+            {
+                "coefficients": np.array(self._model.coef_),
+                "intercept": np.atleast_1d(self._model.intercept_),
+            }
+        )
 
         self._fitted = True
         self._n_features = observations.shape[1]

@@ -1,23 +1,22 @@
 import io
 import pickle
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
+
+import numpy as np
+import pandas as pd
 
 from autoop.core.ml.artifact import Artifact
 from autoop.core.ml.dataset import Dataset
 from autoop.core.ml.feature import Feature
 from autoop.core.ml.metric import Metric
+from autoop.functional.preprocessing import preprocess_features
 
 if TYPE_CHECKING:
     from autoop.core.ml.model import Model
 
-from autoop.functional.feature import detect_feature_types
-from autoop.functional.preprocessing import preprocess_features
-
-import numpy as np
-import pandas as pd
 
 class Pipeline:
-    """A pipeline class to bring together different dataprocessing classes."""
+    """A pipeline class to manage data processing and model training."""
 
     def __init__(
         self,
@@ -28,24 +27,7 @@ class Pipeline:
         target_feature: Feature,
         split: float = 0.8,
     ) -> None:
-        """Initialize the pipeline.
-
-        Args:
-            metrics (List[Metric]): The list of metrics to be used.
-            dataset (Dataset): The data used for processing.
-            model (Model): The model used to process the data.
-            input_features (List[Feature]): A list of features stating
-                their name and whether they are numerical or categorical.
-            target_feature (Feature): The feature to make predictions for.
-            split (float, optional): The split of the train and testing data.
-                Defaults to 0.8.
-
-        Raises:
-            ValueError: If a classification model is used on a continuous
-                target feature.
-            ValueError: If a regression model is used on a catagorical target
-                feature.
-        """
+        """Initialize Pipeline with model, dataset, and configuration."""
         self._dataset = dataset
         self._model = model
         self._input_features = input_features
@@ -53,50 +35,70 @@ class Pipeline:
         self._metrics = metrics
         self._artifacts = {}
         self._split = split
+
+        self._validate_model_type()
+
+    def __str__(self) -> str:
+        """Represent the Pipeline configuration as a string."""
+        return (
+            f"Pipeline(model={self._model.type}, input_features="
+            f"{list(map(str, self._input_features))}, "
+            f"target_feature={str(self._target_feature)}, "
+            f"split={self._split}, "
+            f"metrics={list(map(str, self._metrics))})"
+        )
+
+    def _validate_model_type(self):
+        """Check that model type is compatible with the target feature type."""
         if (
-            target_feature.type == "categorical"
-            and model.type != "classification"
+            self._target_feature.type == "categorical"
+            and self._model.type != "classification"
         ):
             raise ValueError(
-                "Model type must be classification",
-                "for categorical target feature",
+                "Model type must be classification for "
+                "categorical target feature"
             )
-        if target_feature.type == "continuous" and model.type != "regression":
+        if (
+            self._target_feature.type == "continuous"
+            and self._model.type != "regression"
+        ):
             raise ValueError(
                 "Model type must be regression for continuous target feature"
             )
 
-    def __str__(self) -> str:
-        """Return a string representation of the most important attributes."""
-        return f"""
-            Pipeline(
-                model={self._model.type},\n
-                input_features={list(map(str, self._input_features))},\n
-                target_feature={str(self._target_feature)},\n
-                split={self._split},\n
-                metrics={list(map(str, self._metrics))},
-        )
-        """
-
     @property
     def model(self) -> "Model":
-        """Return the model used by the current Pipeline."""
+        """Returns model."""
         return self._model
 
     @property
     def artifacts(self) -> List[Artifact]:
-        """Save the artifacts generated during pipeline execution."""
+        """Collect and return artifacts generated during pipeline execution."""
         artifacts = []
         for name, artifact in self._artifacts.items():
-            artifact_type = artifact.get("type")
-            if artifact_type in ["OneHotEncoder"]:
-                data = artifact["encoder"]
-                data = pickle.dumps(data)
-                artifacts.append(Artifact(name=name, data=data))
-            if artifact_type in ["StandardScaler"]:
-                data = artifact["scaler"]
-                data = pickle.dumps(data)
-                artifacts.append(Artifact(name=name, data=data))
+            data = pickle.dumps(
+                artifact.get(
+                    "encoder"
+                    if "OneHotEncoder" in artifact["type"]
+                    else "scaler"
+                )
+            )
+            artifacts.append(Artifact(name=name, data=data))
+        artifacts.extend(
+            [
+                Artifact(
+                    name="pipeline_config",
+                    data=pickle.dumps(self._get_pipeline_data()),
+                ),
+                self.model.to_artifact(
+                    name=f"pipeline_model_{self.model.type}"
+                ),
+            ]
+        )
+        return artifacts
+
+    def _get_pipeline_data(self) -> dict:
+        """Return core pipeline configuration as a dictionary."""
         pipeline_data = {
             "dataset": self._dataset,
             "input_features": self._input_features,
@@ -104,7 +106,6 @@ class Pipeline:
             "split": self._split,
             "metrics": self._metrics,
         }
-        # Store metric results if they exist.
         if hasattr(self, "_train_metrics_results"):
             pipeline_data.update(
                 {
@@ -112,107 +113,80 @@ class Pipeline:
                     "test_results": self._metrics_results,
                 }
             )
-
-        artifacts.append(
-            Artifact(name="pipeline_config", data=pickle.dumps(pipeline_data))
-        )
-        artifacts.append(
-            self.model.to_artifact(name=f"pipeline_model_{self.model.type}")
-        )
-        return artifacts
+        return pipeline_data
 
     def _register_artifact(self, name: str, artifact: Artifact) -> None:
-        """Store the artifact instance by name in the artifact dictionary."""
         self._artifacts[name] = artifact
 
     def _preprocess_features(self) -> None:
-        """Preprocess the input and target features from the dataset.
-
-        1. Preprocess the target feature and register the artifact.
-        2. Preprocess the input features and register their artifacts.
-        3. Store the output vector and input vectors for later use during
-        model training and evaluation.
+        """
+        Prepare input and target features from the dataset for
+        model training.
         """
         target_feature_name, target_data, artifact = preprocess_features(
             [self._target_feature], self._dataset
         )[0]
         self._register_artifact(target_feature_name, artifact)
+
         input_results = preprocess_features(
             self._input_features, self._dataset
         )
         for feature_name, _data, artifact in input_results:
             self._register_artifact(feature_name, artifact)
-        # Get the input vectors and output vector,
-        # sort by feature name for consistency
+
         self._output_vector = target_data
-        self._input_vectors = [
-            data for (feature_name, data, artifact) in input_results
-        ]
+        self._input_vectors = [data for (_, data, _) in input_results]
 
     def _split_data(self) -> None:
         """Split the data into training and testing sets."""
-        split = self._split
-        self._train_X = [
-            vector[: int(split * len(vector))]
-            for vector in self._input_vectors
-        ]
-        self._test_X = [
-            vector[int(split * len(vector)) :]
-            for vector in self._input_vectors
-        ]
-        self._train_y = self._output_vector[
-            : int(split * len(self._output_vector))
-        ]
-        self._test_y = self._output_vector[
-            int(split * len(self._output_vector)) :
-        ]
+        split_index = int(self._split * len(self._output_vector))
+        self._train_X, self._test_X = [
+            v[:split_index] for v in self._input_vectors
+        ], [v[split_index:] for v in self._input_vectors]
+        self._train_y, self._test_y = (
+            self._output_vector[:split_index],
+            self._output_vector[split_index:],
+        )
 
     def _compact_vectors(self, vectors: List[np.array]) -> np.array:
-        """Combine a list of vectors into one array.
-
-        Args:
-            vectors (List[np.array]): The list of vectors which need
-                to be combined.
-
-        Returns:
-            np.array: The combined vectors in one array.
-        """
         return np.concatenate(vectors, axis=1)
 
     def _train(self) -> None:
-        """Fit the model using the training data."""
-        observations = self._compact_vectors(self._train_X)
-        ground_truth = self._train_y
+        """Train the model on training data."""
+        observations, ground_truth = (
+            self._compact_vectors(self._train_X),
+            self._train_y,
+        )
         self._model.fit(observations, ground_truth)
 
     def _evaluate(self) -> None:
-        """Predict values for the data and collect the metric results."""
-        observations = self._compact_vectors(self._train_X)
-        ground_truth = self._train_y
-        self._train_metrics_results = []
-        predictions = self._model.predict(observations)
+        """Evaluate the model and collect results."""
+        self._train_metrics_results, self._metrics_results = [], []
+        predictions = self._model.predict(self._compact_vectors(self._train_X))
         for metric in self._metrics:
-            result = metric.evaluate(predictions, ground_truth)
-            self._train_metrics_results.append((metric, result))
+            self._train_metrics_results.append(
+                (metric, metric.evaluate(predictions, self._train_y))
+            )
 
-        observations = self._compact_vectors(self._test_X)
-        ground_truth = self._test_y
-        self._metrics_results = []
-        predictions = self._model.predict(observations)
+        test_predictions = self._model.predict(
+            self._compact_vectors(self._test_X)
+        )
         for metric in self._metrics:
-            result = metric.evaluate(predictions, ground_truth)
-            self._metrics_results.append((metric, result))
+            self._metrics_results.append(
+                (metric, metric.evaluate(test_predictions, self._test_y))
+            )
+
         encoder = list(self._artifacts[self._target_feature.name].values())[1]
-        if encoder.__class__.__name__ == "StandardScaler":
-            predictions = encoder.inverse_transform(predictions)
-        self._predictions = predictions
+        self._predictions = (
+            encoder.inverse_transform(test_predictions)
+            if encoder.__class__.__name__ == "StandardScaler"
+            else test_predictions
+        )
 
     def execute(self) -> dict[str, list]:
-        """Process the data in the model and collect the results.
-
-        Returns:
-            dict[str, list]: A dictionary containing the training and test
-                metrics and the predictions.
+        """
+        Execute pipeline steps to process data and return
+        evaluation results.
         """
         self._preprocess_features()
         self._split_data()
@@ -224,41 +198,26 @@ class Pipeline:
             "predictions": self._predictions,
         }
 
-    def _preprocess_prediction_columns(self, new_dataset: Dataset) -> None:
-        """Reorder the new columns so they are in the expected order.
-
-        Args:
-            new_data (Dataset): The dataset with columns that need sorting.
-        """
-        csv = new_dataset.data.decode()
-        full_data = pd.read_csv(io.StringIO(csv))
-        expected_column_order = [
-            feature.name for feature in self._input_features
+    def _reorder_columns(self, new_dataset: Dataset) -> None:
+        """Reorder columns of a dataset to match expected order."""
+        expected_columns = [feature.name for feature in self._input_features]
+        new_data_df = pd.read_csv(io.StringIO(new_dataset.data.decode()))[
+            expected_columns
         ]
-        # Reorder the columns using the list of column names in the correct
-        new_data_reordered = full_data[expected_column_order]
-        new_dataset.data = new_data_reordered.to_csv(index=False).encode()
+        new_dataset.data = new_data_df.to_csv(index=False).encode()
         input_results = preprocess_features(self._input_features, new_dataset)
-        for feature_name, _data, artifact in input_results:
+        for feature_name, data, artifact in input_results:
             self._register_artifact(feature_name, artifact)
-        self._input_vectors = [
-            data for (feature_name, data, artifact) in input_results
-        ]
+        self._input_vectors = [data for (_, data, _) in input_results]
 
     def make_predictions(self, new_dataset: Dataset) -> np.ndarray:
-        """Make predictions for new data.
-
-        Args:
-            new_data (Dataset):
-
-        Returns:
-            np.ndarray: The predictions for the new dataset.
-        """
-        self._preprocess_prediction_columns(new_dataset)
-
+        """Predict on new data after checking column order."""
+        self._reorder_columns(new_dataset)
         observations = self._compact_vectors(self._input_vectors)
         encoder = self._artifacts[self._target_feature.name]
         predictions = self._model.predict(observations)
-        if encoder.__class__.__name__ == "StandardScaler":
-            return encoder.inverse_transform(predictions)
-        return predictions
+        return (
+            encoder.inverse_transform(predictions)
+            if encoder.__class__.__name__ == "StandardScaler"
+            else predictions
+        )

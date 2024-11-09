@@ -91,7 +91,7 @@ You can place your decisions in a docs folder in the root of the project.
 E.g. docs/decisions/DSC-0001-use-typescript.md
 
 ### 📈 Testing
-* Showcase the capability of your streamlit app with at least 3 different usecases on real datasets (from Kaggle). 
+* Showcase the capability of your streamlit app with at least 3 different usecases on real datasets (from Kaggle).
 Some examples include housing prices, second-hand cars, etc.
 
 ### Checklist
@@ -152,7 +152,7 @@ If the feature has been implemented by both students, write `both`.
 If you did not implement the feature
 
 | Requirement                           | Type (FN/NF) | Implemented by | Implementation Completed (add X if done) | Comment |
-|-------------------------------------- |--------------|----------------|------------------------------------------|---------|         
+|-------------------------------------- |--------------|----------------|------------------------------------------|---------|
 | Up-to-date requirements.txt           | NF           |                |                                          | |
 | `ML/detect-features`                  | FN           | F              |                                          | |
 | `ML/artifact`                         | NF           |                |                                          | |
@@ -161,7 +161,7 @@ If you did not implement the feature
 | `ML/metric/extensions`                | FN           |                |                                          | |
 | `ML/model`                            | NF           | F              |                                          | |
 | `ML/model/extensions`                 | FN           | F              | 33%                                      | |
-| `ML/pipeline/evaluation`              | FN           |                |                                          | | 
+| `ML/pipeline/evaluation`              | FN           |                |                                          | |
 | `ST/page/datasets`                    | NF           | F              |                                          | |
 | `ST/datasets/management/create`       | FN           | F              |                                          | |
 | `ST/datasets/management/save`         | FN           | F              |                                          | |

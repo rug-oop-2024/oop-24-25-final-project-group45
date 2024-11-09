@@ -36,7 +36,6 @@ def get_metric(name: str) -> "Metric":
             return Precision()
 
 
-
 class Metric(ABC):
     """Base class for all metrics."""
 
@@ -119,7 +118,7 @@ class MeanAbsoluteError(Metric):
 
 
 class RSquared(Metric):
-    """Rsquared class"""
+    """Rsquared class."""
 
     def evaluate(
         self, predictions: np.ndarray, ground_truth: np.ndarray
@@ -148,13 +147,14 @@ class RSquared(Metric):
 
         return float(1 - residual_sum_of_squares / sum_of_squares_total)
 
+
 class MeanSquaredError(Metric):
-    """Mean squared error class"""
+    """Mean squared error class."""
 
     def evaluate(
         self, predictions: np.ndarray, ground_truth: np.ndarray
     ) -> float:
-        """Calculate average squared distance from ground_truth
+        """Calculate average squared distance from ground_truth.
 
         Args:
             predictions (np.ndarray): Predicted values
@@ -169,8 +169,9 @@ class MeanSquaredError(Metric):
         mse = np.mean(squared_errors)
         return float(mse)
 
+
 class Recall(Metric):
-    """Recall class"""
+    """Recall class."""
 
     def evaluate(
         self, predictions: np.ndarray, ground_truth: np.ndarray
@@ -301,7 +302,6 @@ class Precision(Metric):
         match_gt = ground_truth == unique_label
         match_pred = predictions == unique_label
 
-
         tp = np.sum(match_gt & match_pred)
         fp = np.sum(~match_gt & match_pred)
 
@@ -310,6 +310,7 @@ class Precision(Metric):
             return float(tp / (tp + fp))
 
         return 0.0
+
 
 class Accuracy(Metric):
     """Accuracy class"""
@@ -338,4 +339,3 @@ class Accuracy(Metric):
 
         correct_predictions = np.sum(predictions == ground_truth)
         return float(correct_predictions / len(predictions))
-

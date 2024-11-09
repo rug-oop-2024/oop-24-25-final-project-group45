@@ -1,12 +1,12 @@
+import random
+import tempfile
 import unittest
 
 from autoop.core.database import Database
 from autoop.core.storage import LocalStorage
-import random
-import tempfile
+
 
 class TestDatabase(unittest.TestCase):
-
     def setUp(self):
         self.storage = LocalStorage(tempfile.mkdtemp())
         self.db = Database(self.storage)

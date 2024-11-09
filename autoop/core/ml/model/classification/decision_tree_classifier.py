@@ -1,6 +1,7 @@
-from autoop.core.ml.model.model import Model
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier as DTC
+
+from autoop.core.ml.model.model import Model
 
 
 class DecisionTreeModel(Model):

@@ -1,7 +1,7 @@
 
 # Assignment instructions
 
-## Terminology 
+## Terminology
 Before you move on to implementing the requirements. It is important to understand the context of the problem you are dealing with. These are concepts taken from real industrial applications.
 
 ### Definitions
@@ -10,7 +10,7 @@ Before you move on to implementing the requirements. It is important to understa
 ```json
 {
     "asset_path": "users/mo-assaf/models/yolov8.pth",
-    "version": "1.0.2", 
+    "version": "1.0.2",
     "data": b"binary_state_data",
     "metadata": {
         "experiment_id": "exp-123fbdiashdb",
@@ -20,7 +20,7 @@ Before you move on to implementing the requirements. It is important to understa
     "tags": ["computer_vision", "object_detection"]
 }
 ```
-such artifacts can describe models as seen above, or pipeline objects needed by pipelines such as parameters used in preprocessing (e.g., auto scalers, one-hot encoders, text encoders.). These are also files that can be versioned or contain information such as input mappings. 
+such artifacts can describe models as seen above, or pipeline objects needed by pipelines such as parameters used in preprocessing (e.g., auto scalers, one-hot encoders, text encoders.). These are also files that can be versioned or contain information such as input mappings.
 
 The `id` of an asset is derived as follows:
 ```
@@ -35,7 +35,7 @@ By considering a dataset of $n$ data points, $\hat{y}^{(i)}$ as the model predic
   - For other classification metrics, be careful that these metrics must be for generic multi-class classification tasks and not for binary classification (binary classification = 2 classes, multi-class classification = more than 2 classes). Metrics such as "plain" Precision and F-1 score are not suitable for multi-class classification tasks.
 - **Dataset**: an artifact that represents tabular data (simplified as CSV). In practice, datasets are usually split between a **training set** (which is used to train one or more models) and a **test set** (which is used to evaluate the model's performance). The training and test set must not overlap. The training and testing split is usually operated randomly and controlled by an argument that controls the % of the dataset that goes to the training set.
 - **Model**: a function that maps input features to a target feature (also known as *response*) derived from a set of observations. Can be either a classification or a regression task, as seen during the lectures and assignments. A model has a `parameters` attribute that allows it to be saved and loaded, restoring the state of the model. Contrary to the `Model` class saw during assignment 1, `parameters` include both strict parameters (those useful for prediction) and hyperparameters (those useful for training), similarly to what done in Scikit-learn.
-- **Feature**: individual measurable property, in this case, describing a column in a CSV and a type of either `categorical` or `numerical`. 
+- **Feature**: individual measurable property, in this case, describing a column in a CSV and a type of either `categorical` or `numerical`.
 - **Pipeline**: a state machine that orchestrates the different stages. (i.e., preprocessing, splitting, training, evaluation). Pipelines can evolve to be quite complex but in this assignment we simplify them.
 
 ### Assumptions
@@ -147,7 +147,7 @@ In this part you will integrate the library by importing your implemented classe
 
 # Part III: Go beyond
 
-There are many suggestions in the `README.md` to further extend this and make it more interesting and creative. We give up to 2 points of bonus based on the complexity of your additions and demostration of OOP concepts. 
+There are many suggestions in the `README.md` to further extend this and make it more interesting and creative. We give up to 2 points of bonus based on the complexity of your additions and demostration of OOP concepts.
 
 # Final thoughts
 

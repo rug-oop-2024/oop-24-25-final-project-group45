@@ -1,6 +1,7 @@
-from autoop.core.ml.model.model import Model
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+
+from autoop.core.ml.model.model import Model
 
 
 class LogisticRegressor(Model):

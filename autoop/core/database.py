@@ -1,5 +1,6 @@
 import json
 from typing import List, Optional, Tuple
+
 from autoop.core.storage import Storage
 
 
@@ -77,11 +78,17 @@ class Database:
         # Save or update current data in storage
         for collection, items in self._data.items():
             for data_id, entry in items.items():
-                self._storage.save(json.dumps(entry).encode(), f"{collection}/{data_id}")
+                self._storage.save(
+                    json.dumps(entry).encode(), f"{collection}/{data_id}"
+                )
 
         # Remove stale items from storage if they don't exist in memory
         existing_keys = set(self._storage.list(""))
-        memory_keys = {f"{coll}/{id}" for coll, items in self._data.items() for id in items}
+        memory_keys = {
+            f"{coll}/{id}"
+            for coll, items in self._data.items()
+            for id in items
+        }
         stale_keys = existing_keys - memory_keys
         for key in stale_keys:
             self._storage.delete(key)

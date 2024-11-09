@@ -1,10 +1,10 @@
 from typing import List, Tuple
 
-from autoop.core.ml.dataset import Dataset
-from autoop.core.ml.feature import Feature
-
 import numpy as np
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+from autoop.core.ml.dataset import Dataset
+from autoop.core.ml.feature import Feature
 
 
 def preprocess_features(

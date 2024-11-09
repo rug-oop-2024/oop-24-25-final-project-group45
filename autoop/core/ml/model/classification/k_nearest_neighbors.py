@@ -1,7 +1,7 @@
-from autoop.core.ml.model.model import Model
-
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier as SkKNeighborsClassifier
+
+from autoop.core.ml.model.model import Model
 
 
 class KNearestNeighbors(Model):

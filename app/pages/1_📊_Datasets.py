@@ -1,8 +1,8 @@
-from app.core.system import AutoMLSystem
-from autoop.core.ml.dataset import Dataset
-
 import pandas as pd
 import streamlit as st
+
+from app.core.system import AutoMLSystem
+from autoop.core.ml.dataset import Dataset
 
 if "executed_pipeline" in st.session_state:
     st.session_state.result = None
@@ -25,7 +25,9 @@ if csv_file is not None:
     dataframe = pd.read_csv(csv_file)
     file_name = csv_file.name
 
-    shuffle_box = st.checkbox("Would you like to shuffle the data?", value=False)
+    shuffle_box = st.checkbox(
+        "Would you like to shuffle the data?", value=False
+    )
 
     st.write(dataframe.head())
     dataset = Dataset.from_dataframe(dataframe, file_name, file_name)

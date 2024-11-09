@@ -1,6 +1,7 @@
-from autoop.core.ml.model.model import Model
 import numpy as np
 from sklearn.svm import SVR
+
+from autoop.core.ml.model.model import Model
 
 
 class SupportVectorRegressor(Model):
@@ -24,7 +25,8 @@ class SupportVectorRegressor(Model):
         Args:
             observations (np.ndarray): Observations used to train the model.
                 Row dimension is samples, column dimension is features.
-            targets (np.ndarray): Target values corresponding to the observations.
+            targets (np.ndarray): Target values corresponding to the
+            observations.
                 Row dimension is samples.
         """
         self._model.fit(observations, targets)
@@ -42,7 +44,8 @@ class SupportVectorRegressor(Model):
         """Predict values for the given observations.
 
         Args:
-            observations (np.ndarray): Observations for which to predict values.
+            observations (np.ndarray): Observations for which
+            to predict values.
                 Row dimension is samples, column dimension is features.
 
         Returns:
