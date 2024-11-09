@@ -1,75 +1,75 @@
 import base64
-
+from typing import List, Dict, Optional
 
 class Artifact:
-    """Make artifact class."""
+    """Represents a digital asset with metadata and data storage."""
 
     def __init__(
         self,
         name: str,
         data: bytes,
-        artifact_type: str = None,
-        asset_path: str = None,
-        version: str = None,
-        tags: list = None,
-        metadata: dict = None,
-    ):
-        """Initialize artifact.
+        artifact_type: Optional[str] = None,
+        asset_path: Optional[str] = None,
+        version: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Initialize the artifact with its properties.
 
         Args:
-            name (str): name of artifact
-            asset_path (str): path of artifact
-            artifact_type (str): artifact type
-            data (bytes): data of artifact
-            version (str): artifact version
-            tags (list, optional): tags for artifact. Defaults to [].
-            metadata (dict, optional): ids of metadata. Defaults to {}.
+            name (str): Name of the artifact.
+            data (bytes): Binary data for the artifact.
+            artifact_type (Optional[str]): Type or category of the artifact.
+            asset_path (Optional[str]): Path for the artifact asset.
+            version (Optional[str]): Version of the artifact.
+            tags (Optional[List[str]]): Tags for categorizing the artifact.
+            metadata (Optional[Dict[str, str]]): Metadata associated with the artifact.
         """
         self.name = name
-        self.asset_path = asset_path if asset_path is not None else name
-        self.type = artifact_type if artifact_type is not None else "other"
         self.data = data
-        self.version = version if version is not None else "1.0.0"
-        self.tags = tags if tags is not None else []
-        self.metadata = metadata if metadata is not None else {}
-        self.id = f"{self._base64_encode(self.asset_path)}-{self.version}"
+        self.type = artifact_type or "other"
+        self.asset_path = asset_path or name
+        self.version = version or "1.0.0"
+        self.tags = tags or []
+        self.metadata = metadata or {}
+        self.id = f"{self._encode_base64(self.asset_path)}-{self.version}"
 
-    def save_metadata(self, artifact: "Artifact"):
-        """Save new metadata.
+    def save_data(self, new_data: bytes) -> bytes:
+        """Save new data to the artifact and return it.
 
         Args:
-            artifact (Artifact): metadata to be saved
+            new_data (bytes): Data to be saved.
+
+        Returns:
+            bytes: Saved data.
         """
-        self.metadata.update({artifact.name: artifact.id})
+        self.data = new_data
+        return self.data
+
+    def add_metadata(self, artifact: "Artifact") -> None:
+        """Add metadata by storing another artifact's ID.
+
+        Args:
+            artifact (Artifact): Artifact whose metadata ID to store.
+        """
+        self.metadata[artifact.name] = artifact.id
 
     @staticmethod
-    def _base64_encode(value: str) -> str:
-        """Encode a string using base64 for unique asset ID generation.
+    def _encode_base64(value: str) -> str:
+        """Encode a string in base64 for ID generation.
 
         Args:
-            value (str): The value to encode.
+            value (str): String to encode.
 
         Returns:
             str: Base64 encoded string.
         """
         return base64.urlsafe_b64encode(value.encode()).decode()
 
-    def read(self) -> bytes:
-        """Retrieve the data from the artifact.
+    def read_data(self) -> bytes:
+        """Get the artifact's data.
 
         Returns:
-            bytes: The bytes that represent the data of the artifact.
+            bytes: The artifact's binary data.
         """
-        return self.data
-
-    def save(self, new_data) -> None:
-        """Save the data in the artifact.
-
-        Args:
-            new_data (_type_): The data that is to be saved in the artifact.
-
-        Returns:
-            returns the data that was given.
-        """
-        self.data = new_data
         return self.data

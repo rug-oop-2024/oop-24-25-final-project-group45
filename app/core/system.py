@@ -37,7 +37,7 @@ class ArtifactRegistry:
             "metadata": artifact.metadata,
             "type": artifact.type,
         }
-        self._database.set_data(f"artifacts", artifact.id, entry)
+        self._database.insert(f"artifacts", artifact.id, entry)
 
     def list(self, type: str = None) -> List[Artifact]:
         """Get artrifacts in the registry
@@ -48,7 +48,7 @@ class ArtifactRegistry:
         Returns:
             List[Artifact]: list of artifacts
         """
-        entries = self._database.data_list("artifacts")
+        entries = self._database.list_entries("artifacts")
         artifacts = []
         for id, data in entries:
             if type is not None and data["type"] != type:
@@ -71,7 +71,7 @@ class ArtifactRegistry:
         Args:
             artifact_id (str): id of artifact
         """
-        data = self._database.get("artifacts", artifact_id)
+        data = self._database.fetch("artifacts", artifact_id)
         st.write(data)
         return Artifact(
             name=data["name"],
@@ -89,9 +89,9 @@ class ArtifactRegistry:
         Args:
             artifact_id (str): id of artifact
         """
-        data = self._database.get("artifacts", artifact_id)
-        self._storage.delete(data["asset_path"])
-        self._database.delete("artifacts", artifact_id)
+        data = self._database.fetch("artifacts", artifact_id)
+        self._storage.remove(data["asset_path"])
+        self._database.remove("artifacts", artifact_id)
 
 
 class AutoMLSystem:
@@ -122,7 +122,7 @@ class AutoMLSystem:
                 LocalStorage("./assets/objects"),
                 Database(LocalStorage("./assets/dbo")),
             )
-        AutoMLSystem._instance._database.refresh()
+        AutoMLSystem._instance._database.reload()
         return AutoMLSystem._instance
 
     @property

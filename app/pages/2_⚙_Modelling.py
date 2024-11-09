@@ -1,4 +1,5 @@
 import io
+from math import ceil
 
 from app.core.system import AutoMLSystem
 from autoop.core.ml.dataset import Dataset
@@ -18,200 +19,143 @@ from autoop.functional.feature import detect_feature_types
 import pandas as pd
 import streamlit as st
 
+MIN_TRAINING_SAMPLES = 3
+
 st.set_page_config(page_title="Modelling", page_icon="📈")
 
 
-def write_helper_text(text: str):
-    """Write some text.
-
-    Args:
-        text (str): text to be written
-    """
+def display_helper_text(text: str) -> None:
     st.write(f'<p style="color: #888;">{text}</p>', unsafe_allow_html=True)
 
 
+# Initialize session state variables
+for key in ["result", "executed_pipeline", "active_pipeline", "result_data"]:
+    if key not in st.session_state:
+        st.session_state[key] = None
+
 st.write("# ⚙ Modelling")
-write_helper_text(
-    "In this section, you can design a "
-    + "machine learning pipeline to train a model on a dataset."
+display_helper_text(
+    "In this section, you can design a " +
+    "machine learning pipeline to train a model on a dataset."
 )
 
 automl = AutoMLSystem.get_instance()
-
 datasets = automl.registry.list(type="dataset")
 
-metrics = []
-selected_metrics = False
-selected_features = False
-selected_model = False
+analysis_metrics = []
+model_chosen, features_chosen, metrics_chosen = False, False, False
 
-st.write("## Dataset Selection:")
-name = st.selectbox(
-    "Choose dataset to use on model or upload your own in datasets page:",
-    (dataset.name for dataset in datasets),
+st.write("## Select Dataset:")
+dataset_name = st.selectbox(
+    "Choose dataset to apply to model or upload your own from the datasets page:",
+    (ds.name for ds in datasets),
     index=None,
 )
 
-if name is not None:
-    for dataset in datasets:
-        if dataset.name == name:
-            chosen_data = dataset
-            break
-    data_bytes = chosen_data.data
-    csv = data_bytes.decode()
-    full_data = pd.read_csv(io.StringIO(csv))
-    st.write("Chosen data:", full_data.head())
-    correct_dataset = Dataset.from_dataframe(
-        name=chosen_data.name,
-        data=full_data,
-        asset_path=chosen_data.asset_path,
-        version=chosen_data.version,
+if dataset_name:
+    st.write("## Remove Dataset")
+    if st.button("Remove dataset"):
+        for ds in datasets:
+            if ds.name == dataset_name:
+                automl.registry.delete(ds.id)
+                st.rerun()
+
+    selected_data = next(ds for ds in datasets if ds.name == dataset_name)
+    data_content = selected_data.data.decode()
+    loaded_data = pd.read_csv(io.StringIO(data_content))
+    st.write("Selected Data:", loaded_data.head())
+
+    updated_dataset = Dataset.from_dataframe(
+        name=selected_data.name,
+        data=loaded_data,
+        asset_path=selected_data.asset_path,
+        version=selected_data.version,
     )
-    features = detect_feature_types(correct_dataset)
+    feature_list = detect_feature_types(updated_dataset)
     st.write("## Feature Selection:")
-    target = st.selectbox(
-        "Select target column for prediction:", features, index=None
-    )
-    if target is not None:
-        input_features_options = [
-            feature for feature in features if feature.name != target.name
-        ]
-        st.write(f"Target column: {target.name}")
-        input_features = st.multiselect(
-            "Select input columns for model:", input_features_options
-        )
-        st.write(
-            "Chosen columns:",
-            ", ".join(feature.name for feature in input_features),
-        )
-        if len(input_features) >= 1:
-            selected_features = True
-        feature_type = target.type
 
+    target_column = st.selectbox("Select target column for prediction:", feature_list, index=None)
+    if target_column:
+        input_columns = [f for f in feature_list if f.name != target_column.name]
+        st.write(f"Target column: {target_column.name}")
+
+        selected_inputs = st.multiselect("Choose input columns for model:", input_columns)
+        if selected_inputs:
+            features_chosen = True
+            st.write("Selected Columns:", ", ".join(feat.name for feat in selected_inputs))
+
+        target_type = target_column.type
         st.write("## Model Selection:")
-        if feature_type == "numerical":
-            st.write("Task type is regression.")
-            model = st.selectbox("Choose models to use:", REGRESSION_MODELS)
-            model = get_model(model)
-            if model is not None:
-                selected_model = True
 
-            metrics = []
-            metric_names = st.multiselect(
-                "Select metrics to evaluate:", REGRESSION_METRICS
-            )
-            metrics = [get_metric(metric) for metric in metric_names]
-            selected_metrics = len(metrics) >= 1
-        elif feature_type == "categorical":
-            st.write("Task type is classification.")
-            model = st.selectbox(
-                "Choose models to use:", CLASSIFICATION_MODELS
-            )
-            model = get_model(model)
-            if model is not None:
-                selected_model = True
+        if target_type == "numerical":
+            st.write("Detected task: Regression")
+            selected_model = st.selectbox("Choose model to use:", REGRESSION_MODELS)
+            model_instance = get_model(selected_model)
+            if model_instance:
+                model_chosen = True
 
-            metrics = []
-            metric_names = st.multiselect(
-                "Select metrics to evaluate:", CLASSIFICATION_METRICS
-            )
-            metrics = [get_metric(metric) for metric in metric_names]
-            selected_metrics = len(metrics) >= 1
+            analysis_metrics = [get_metric(m) for m in st.multiselect("Select metrics:", REGRESSION_METRICS)]
+            metrics_chosen = bool(analysis_metrics)
 
+        elif target_type == "categorical":
+            st.write("Detected task: Classification")
+            selected_model = st.selectbox("Choose model to use:", CLASSIFICATION_MODELS)
+            model_instance = get_model(selected_model)
+            if model_instance:
+                model_chosen = True
 
-if selected_model and selected_metrics and selected_features:
-    split = st.slider(
-        "Select how much of the data is for training.", 0.01, 0.99, 0.80
+            analysis_metrics = [get_metric(m) for m in st.multiselect("Select metrics:", CLASSIFICATION_METRICS)]
+            metrics_chosen = bool(analysis_metrics)
+
+if model_chosen and metrics_chosen and features_chosen:
+    min_ratio = ceil(MIN_TRAINING_SAMPLES / len(loaded_data) * 100) / 100
+    train_ratio = st.slider("Select proportion of data for training:", min_ratio, 0.99, 0.80)
+
+    model_pipeline = Pipeline(
+        metrics=analysis_metrics,
+        dataset=updated_dataset,
+        model=model_instance,
+        input_features=selected_inputs,
+        target_feature=target_column,
+        split=train_ratio,
     )
-    pipeline = Pipeline(
-        metrics=metrics,
-        dataset=correct_dataset,
-        model=model,
-        input_features=input_features,
-        target_feature=target,
-        split=split,
-    )
-    # Pipeline summary
+
     st.write("## Pipeline Summary:")
-    st.write("The following pipeline has been created:")
-    st.write("- **Dataset**:", correct_dataset.name)
-    st.write("- **Target Feature**:", target.name)
-    st.write(
-        "- **Input Features**:",
-        ", ".join(feature.name for feature in input_features),
-    )
-    st.write("- **Model**:", model.__class__.__name__)
-    st.write(
-        "- **Metrics**:",
-        ", ".join(metric.__class__.__name__ for metric in metrics),
-    )
-    st.write("- **Training Split**:", f"{split:.0%} of data")
+    st.write("- **Dataset**:", updated_dataset.name)
+    st.write("- **Target Column**:", target_column.name)
+    st.write("- **Input Columns**:", ", ".join(feat.name for feat in selected_inputs))
+    st.write("- **Model**:", model_instance.__class__.__name__)
+    st.write("- **Metrics**:", ", ".join(metric.__class__.__name__ for metric in analysis_metrics))
+    st.write("- **Training Ratio**:", f"{train_ratio:.0%} of data")
 
-    # Not all predictions should be showed if there are many predictions
-    max_display = st.number_input(
-        "Enter the maximum number of predictions to display. (0=all))",
-        min_value=0,
-        value=50,
-        step=1,
-    )
-    if st.button("Execute pipeline"):
-        result = pipeline.execute()
+    max_predictions = st.number_input("Specify max predictions to display (0=all):", min_value=0, value=50, step=1)
 
-        # Extract results
-        train_result = result["train_metrics"]
-        test_result = result["test_metrics"]
-        predictions = result["predictions"]
-        # Get the original labels
-        if target.type == "categorical":
-            unique_target_values = full_data[target.name].unique()
-            predictions = [unique_target_values[pred] for pred in predictions]
+    if st.button("Run Pipeline"):
+        st.session_state.result_data = model_pipeline.execute()
+        st.session_state.active_pipeline = model_pipeline
+
+    if st.session_state.active_pipeline:
+        pipeline_output = st.session_state.result_data
+        train_output = pipeline_output["train_metrics"]
+        test_output = pipeline_output["test_metrics"]
+        preds = pipeline_output["predictions"]
+
+        if target_column.type == "categorical":
+            unique_vals = loaded_data[target_column.name].unique()
+            preds = [unique_vals[pred] for pred in preds]
 
         st.write("## Pipeline Results:")
+        st.write("### Training Metrics:")
+        for result in train_output:
+            st.write(f"- **{result[0].__class__.__name__}**: {result[1]:.4f}")
 
-        st.write("### Train metrics:")
-        for metric_result in train_result:
-            metric_name = metric_result[0].__class__.__name__
-            st.write(f"- **{metric_name}**: {metric_result[1]:.4f}")
-
-        st.write("### Test metrics:")
-        for metric_result in test_result:
-            metric_name = metric_result[0].__class__.__name__
-            st.write(f"- **{metric_name}**: {metric_result[1]:.4f}")
+        st.write("### Testing Metrics:")
+        for result in test_output:
+            st.write(f"- **{result[0].__class__.__name__}**: {result[1]:.4f}")
 
         st.write("### Predictions:")
-        if max_display == 0 or max_display >= len(predictions):
-            # Show all predictions
-            st.code(predictions)
+        if max_predictions == 0 or max_predictions >= len(preds):
+            st.code(preds)
         else:
-            # Show a selection of the predictions
-            show_predictions = predictions[:max_display]
-            st.code(show_predictions)
-            st.write(
-                f"... and {len(predictions) - max_display} ",
-                "more.",
-            )
-
-    # The pipeline needs to have a trained model before it can be saved.
-    st.write("## Save Pipeline:")
-    pipeline_name = st.text_input("Give name to pipeline:", "MyPipeline")
-    pipeline_version = st.text_input(
-        "Give the version of the pipeline", "1.0.0"
-    )
-    if st.button("Save pipeline"):
-        all_artifacts = pipeline.artifacts
-        for artifact in all_artifacts:
-            if artifact.name == "pipeline_config":
-                artifact.name = pipeline_name
-                artifact.asset_path = pipeline_name
-                artifact.version = pipeline_version
-                artifact.type = "pipeline"
-
-                encoded_path = artifact._base64_encode(artifact.asset_path)
-                artifact.id = f"{encoded_path}-{artifact.version}"
-
-                pipeline_artifact = artifact
-            else:
-                automl._registry.register(artifact)
-                pipeline_artifact.save_metadata(artifact)
-        automl._registry.register(pipeline_artifact)
-        st.write(pipeline_artifact)
+            st.code(preds[:max_predictions])
+            st.write(f"... and {len(preds) - max_predictions} more.")

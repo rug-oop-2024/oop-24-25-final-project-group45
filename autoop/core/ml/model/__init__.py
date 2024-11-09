@@ -1,39 +1,57 @@
-from autoop.core.ml.model.model import Model
+"""Public package to get correct model.
 
-from autoop.core.ml.model.regression.multiple_regression import MultipleLinearRegression
-from autoop.core.ml.model.regression.lasso_wrap import LassoWrapper
-from autoop.core.ml.model.regression.poly_regression import PolynomialRegression
+Raises:
+    ValueError: error if name isn't a model
 
-from autoop.core.ml.model.classification.knn import KNearestNeighbors
-from autoop.core.ml.model.classification.logistic_regression import MultinomialLogisticRegression
-from autoop.core.ml.model.classification.svc_linear import SVCLinear
+Returns:
+    Model: returns a model that corresponds with the name
+"""
+
+from typing import TYPE_CHECKING
+
+from autoop.core.ml.model.classification.k_nearest_neighbors import (
+    KNearestNeighbors,
+)
+from autoop.core.ml.model.classification.linear_svc import LinearSVC
+from autoop.core.ml.model.classification.random_forest_classifier import (
+    RandomForestClassifier,
+)
+
+if TYPE_CHECKING:
+    from autoop.core.ml.model.model import Model
+
+from autoop.core.ml.model.regression.lasso import Lasso
+from autoop.core.ml.model.regression.multiple_linear_regression import (
+    MultipleLinearRegression,
+)
+from autoop.core.ml.model.regression.ridge import Ridge
 
 REGRESSION_MODELS = [
     "MultipleLinearRegression",
-    "LassoWrapper",
-    "PolynomialRegression"
-]
+    "Lasso",
+    "Ridge",
+]  # add your models as str here
 
 CLASSIFICATION_MODELS = [
     "KNearestNeighbors",
-    "LogisticRegression",
-    "LinearSVC"
-]
+    "LinearSVC",
+    "RandomForestClassifier",
+]  # add your models as str here
 
 
-def get_model(model_name: str) -> Model:
+def get_model(model_name: str) -> "Model":
     """Get a model by name using this Factory Function."""
     match model_name:
         case "MultipleLinearRegression":
             return MultipleLinearRegression()
+        case "Lasso":
+            return Lasso()
+        case "Ridge":
+            return Ridge()
         case "KNearestNeighbors":
             return KNearestNeighbors()
-        case "LogisticRegression":
-            return MultinomialLogisticRegression
         case "LinearSVC":
-            return SVCLinear
-        case "LassoWrapper":
-            return LassoWrapper
-        case "PolynomialRegression":
-            return PolynomialRegression
+            return LinearSVC()
+        case "RandomForestClassifier":
+            return RandomForestClassifier()
     raise ValueError(f"Model {model_name} doesn't exist.")

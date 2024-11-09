@@ -1,105 +1,97 @@
 import json
-import os
 from typing import List, Optional, Tuple
-
 from autoop.core.storage import Storage
 
 
 class Database:
-    """Represents a database for storing and managing data collections."""
+    """A lightweight database interface for structured storage and retrieval."""
 
-    def __init__(self, storage: Storage):
-        """Initialize the Database with a storage backend.
+    def __init__(self, storage: Storage) -> None:
+        """Initialize the database with storage backend.
 
         Args:
-            storage (Storage): Storage instance for data persistence.
+            storage (Storage): Storage backend instance to persist data.
         """
         self._storage = storage
         self._data = {}
-        self._load()
+        self._load_data()
 
-    def set_data(self, collection: str, data_id: str, entry: dict) -> dict:
-        """Store a data entry within a specified collection.
+    def insert(self, collection: str, data_id: str, entry: dict) -> dict:
+        """Insert or update an entry in a collection.
 
         Args:
-            collection (str): Collection to hold the data entry.
-            data_id (str): Unique identifier for the data entry.
-            entry (dict): The data content to store.
+            collection (str): Name of the collection.
+            data_id (str): Unique identifier for the entry.
+            entry (dict): Data to be stored.
 
         Returns:
-            dict: The data entry that was stored.
+            dict: The stored entry.
         """
-        assert isinstance(entry, dict), "Data should be provided as a dictionary."
-        assert isinstance(collection, str), "Collection name must be a string."
-        assert isinstance(data_id, str), "Data ID must be a string."
-
+        assert isinstance(entry, dict), "Entry must be a dictionary."
         if collection not in self._data:
             self._data[collection] = {}
         self._data[collection][data_id] = entry
-        self._persist()
+        self._save_data()
         return entry
 
-    def get(self, collection: str, data_id: str) -> Optional[dict]:
-        """Retrieve a data entry by its ID within a collection.
+    def fetch(self, collection: str, data_id: str) -> Optional[dict]:
+        """Retrieve an entry from a collection by its ID.
 
         Args:
-            collection (str): The collection name.
-            data_id (str): The ID of the data entry to retrieve.
+            collection (str): Collection name.
+            data_id (str): Entry identifier.
 
         Returns:
-            Optional[dict]: The data entry if it exists, otherwise None.
+            Optional[dict]: Retrieved entry or None if it doesn't exist.
         """
         return self._data.get(collection, {}).get(data_id)
 
-    def delete(self, collection: str, data_id: str) -> None:
-        """Remove a specific data entry from a collection.
+    def remove(self, collection: str, data_id: str) -> None:
+        """Remove an entry from a collection.
 
         Args:
-            collection (str): Collection from which to delete the entry.
-            data_id (str): ID of the entry to delete.
+            collection (str): Collection name.
+            data_id (str): Entry identifier.
         """
-        if self._data.get(collection) and data_id in self._data[collection]:
+        if collection in self._data and data_id in self._data[collection]:
             del self._data[collection][data_id]
-            self._persist()
+            self._save_data()
 
-    def data_list(self, collection: str) -> List[Tuple[str, dict]]:
-        """Get a list of all entries within a collection.
+    def list_entries(self, collection: str) -> List[Tuple[str, dict]]:
+        """Get all entries from a specific collection.
 
         Args:
-            collection (str): The collection to list entries from.
+            collection (str): Name of the collection.
 
         Returns:
-            List[Tuple[str, dict]]: List of (ID, data) pairs in the collection.
+            List[Tuple[str, dict]]: List of entries in the form (ID, entry).
         """
         return list(self._data.get(collection, {}).items())
 
-    def refresh(self) -> None:
-        """Reload data from storage to refresh the database state."""
-        self._load()
+    def reload(self) -> None:
+        """Reload all data from storage."""
+        self._load_data()
 
-    def _persist(self) -> None:
-        """Save the current state of all collections to the storage."""
-        for collection, data in self._data.items():
-            if not data:
-                continue
-            for data_id, item in data.items():
-                self._storage.save(
-                    json.dumps(item).encode(), f"{collection}{os.sep}{data_id}"
-                )
+    def _save_data(self) -> None:
+        """Persist data to storage backend."""
+        # Save or update current data in storage
+        for collection, items in self._data.items():
+            for data_id, entry in items.items():
+                self._storage.save(json.dumps(entry).encode(), f"{collection}/{data_id}")
 
-        # Remove entries from storage if they are no longer in the database
-        stored_keys = self._storage.list("")
-        for key in stored_keys:
-            collection, data_id = key.split(os.sep)[-2:]
-            if collection not in self._data or data_id not in self._data[collection]:
-                self._storage.delete(f"{collection}{os.sep}{data_id}")
+        # Remove stale items from storage if they don't exist in memory
+        existing_keys = set(self._storage.list(""))
+        memory_keys = {f"{coll}/{id}" for coll, items in self._data.items() for id in items}
+        stale_keys = existing_keys - memory_keys
+        for key in stale_keys:
+            self._storage.delete(key)
 
-    def _load(self) -> None:
-        """Load all data entries from storage into the database."""
-        self._data.clear()
+    def _load_data(self) -> None:
+        """Load data from storage backend into memory."""
+        self._data = {}
         for key in self._storage.list(""):
-            collection, data_id = key.split(os.sep)[-2:]
-            data = self._storage.load(f"{collection}{os.sep}{data_id}")
+            collection, data_id = key.rsplit("/", 2)[-2:]
+            entry_data = self._storage.load(key)
             if collection not in self._data:
                 self._data[collection] = {}
-            self._data[collection][data_id] = json.loads(data.decode())
+            self._data[collection][data_id] = json.loads(entry_data.decode())

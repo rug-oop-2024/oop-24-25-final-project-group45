@@ -20,13 +20,13 @@ class Dataset(Artifact):
             version=version,
         )
 
-    def read(self) -> pd.DataFrame:
-        """ Read data from a given path """
-        bytes = super().read()
+    def read_df(self) -> pd.DataFrame:
+        """ Function that reads data in bytes """
+        bytes = super().read_data()
         csv = bytes.decode()
         return pd.read_csv(io.StringIO(csv))
 
-    def save(self, data: pd.DataFrame) -> bytes:
-        """ Save data to a given path """
+    def save_df(self, data: pd.DataFrame) -> bytes:
+        """ Function that saves data in bytes"""
         bytes = data.to_csv(index=False).encode()
-        return super().save(bytes)
+        return super().save_data(bytes)
