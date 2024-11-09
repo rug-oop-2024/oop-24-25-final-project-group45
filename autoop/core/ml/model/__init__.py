@@ -1,20 +1,11 @@
-"""Public package to get correct model.
-
-Raises:
-    ValueError: error if name isn't a model
-
-Returns:
-    Model: returns a model that corresponds with the name
-"""
-
 from typing import TYPE_CHECKING
 
 from autoop.core.ml.model.classification.k_nearest_neighbors import (
     KNearestNeighbors,
 )
-from autoop.core.ml.model.classification.linear_svc import LinearSVC
-from autoop.core.ml.model.classification.random_forest_classifier import (
-    RandomForestClassifier,
+from autoop.core.ml.model.classification.logistic_regression import LogisticRegressor
+from autoop.core.ml.model.classification.decision_tree_classifier import (
+    DecisionTreeModel,
 )
 
 if TYPE_CHECKING:
@@ -24,19 +15,19 @@ from autoop.core.ml.model.regression.lasso import Lasso
 from autoop.core.ml.model.regression.multiple_linear_regression import (
     MultipleLinearRegression,
 )
-from autoop.core.ml.model.regression.ridge import Ridge
+from autoop.core.ml.model.regression.support_vector_regression import SupportVectorRegressor
 
 REGRESSION_MODELS = [
     "MultipleLinearRegression",
     "Lasso",
-    "Ridge",
-]  # add your models as str here
+    "SupportVectorRegressor",
+]
 
 CLASSIFICATION_MODELS = [
     "KNearestNeighbors",
-    "LinearSVC",
-    "RandomForestClassifier",
-]  # add your models as str here
+    "LogisticRegression",
+    "DecisionTreeClassifier",
+]
 
 
 def get_model(model_name: str) -> "Model":
@@ -46,12 +37,12 @@ def get_model(model_name: str) -> "Model":
             return MultipleLinearRegression()
         case "Lasso":
             return Lasso()
-        case "Ridge":
-            return Ridge()
+        case "SupportVectorRegressor":
+            return SupportVectorRegressor()
         case "KNearestNeighbors":
             return KNearestNeighbors()
-        case "LinearSVC":
-            return LinearSVC()
-        case "RandomForestClassifier":
-            return RandomForestClassifier()
+        case "LogisticRegression":
+            return LogisticRegressor()
+        case "DecisionTreeClassifier":
+            return DecisionTreeModel()
     raise ValueError(f"Model {model_name} doesn't exist.")

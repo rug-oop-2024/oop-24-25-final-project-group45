@@ -94,47 +94,6 @@ class Model(ABC):
         """
         pass
 
-    def _check_fit_requirements(
-        self, observations: np.ndarray, ground_truths: np.ndarray
-    ) -> None:
-        """Ensure that the model can be fit with the given data.
-
-        Args:
-            observations (np.ndarray): Training data.
-            ground_truths (np.ndarray): Labels for the data.
-
-        Raises:
-            ValueError: If observations and labels do not match in count.
-            ValueError: If fewer than two samples are provided.
-        """
-        if observations.shape[0] != ground_truths.shape[0]:
-            raise ValueError(
-                f"Mismatch: {observations.shape[0]} samples vs. "
-                f"{ground_truths.shape[0]} labels."
-            )
-        if observations.shape[0] < 2:
-            raise ValueError("At least two samples are needed.")
-
-    def _check_predict_requirements(self, observations: np.ndarray) -> None:
-        """Check if the model is ready for predictions.
-
-        Args:
-            observations (np.ndarray): Data for predictions.
-
-        Raises:
-            ValueError: If the model hasn't been fitted.
-            ValueError: If observations aren't 2-dimensional.
-            ValueError: If feature count in observations is incorrect.
-        """
-        if not self._fitted:
-            raise ValueError("Model is not yet fitted. Please fit before predicting.")
-        if observations.ndim != 2:
-            raise ValueError("Observations must be a 2D array.")
-        if observations.shape[1] != self._n_features:
-            raise ValueError(
-                f"Expected {self._n_features} features; got {observations.shape[1]}."
-            )
-
     def to_artifact(self, name: str) -> Artifact:
         """Convert the model into an artifact.
 

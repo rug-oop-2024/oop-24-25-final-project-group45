@@ -69,11 +69,9 @@ class KNearestNeighbors(Model):
                 f"observations ({observations.shape[0]})."
             )
 
-        # If the ground truth is one-hot-encoded: extract label indices
         if ground_truths.ndim > 1:
             ground_truths = np.argmax(ground_truths, axis=1)
 
-        # Train the model
         self._model.fit(observations, ground_truths)
 
         self._fitted = True
@@ -89,5 +87,4 @@ class KNearestNeighbors(Model):
         Returns:
             np.ndarray: The classification of the observation.
         """
-        self._check_predict_requirements(observations)
         return self._model.predict(observations)

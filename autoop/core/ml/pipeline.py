@@ -260,6 +260,5 @@ class Pipeline:
         encoder = self._artifacts[self._target_feature.name]
         predictions = self._model.predict(observations)
         if encoder.__class__.__name__ == "StandardScaler":
-            # Return the original values using the encoder
             return encoder.inverse_transform(predictions)
         return predictions

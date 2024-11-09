@@ -11,7 +11,6 @@ class MultipleLinearRegression(Model):
         super().__init__()
         self._model = LinearRegression(*args, **kwargs)
 
-        # Set hyperparameters using the model's parameter dictionary
         self.parameters = self._model.get_params()
         self.type = "regression"
 
@@ -22,12 +21,8 @@ class MultipleLinearRegression(Model):
             observations (np.ndarray): Observations matrix (samples x variables).
             ground_truth (np.ndarray): Ground truths vector corresponding to X (samples).
         """
-        self._check_fit_requirements(observations, ground_truth)
-
-        # Train the model on the provided data
         self._model.fit(observations, ground_truth)
 
-        # Update parameters with coefficients and intercept
         self.parameters.update({
             "coefficients": np.array(self._model.coef_),
             "intercept": np.atleast_1d(self._model.intercept_),
@@ -36,14 +31,13 @@ class MultipleLinearRegression(Model):
         self._fitted = True
         self._n_features = observations.shape[1]
 
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, observations: np.ndarray) -> np.ndarray:
         """Generate predictions for the given observations.
 
         Args:
-            X (np.ndarray): Observations matrix for prediction.
+            observations (np.ndarray): Observations matrix for prediction.
 
         Returns:
-            np.ndarray: Predicted values for each observation in X.
+            np.ndarray: Predicted values for each observation.
         """
-        self._check_predict_requirements(X)
-        return self._model.predict(X)
+        return self._model.predict(observations)
