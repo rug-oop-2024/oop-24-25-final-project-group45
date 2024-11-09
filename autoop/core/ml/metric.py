@@ -26,17 +26,17 @@ def get_metric(metric_name: str) -> "Metric":
         )
 
     if metric_name == "MSE":
-        return MeanSquaredErrorMetric()
+        return MeanSquaredError()
     elif metric_name == "MAE":
-        return MeanAbsoluteErrorMetric()
+        return MeanAbsoluteError()
     elif metric_name == "R2":
-        return RSquaredMetric()
+        return RSquared()
     elif metric_name == "Accuracy":
-        return AccuracyMetric()
+        return Accuracy()
     elif metric_name == "Precision":
-        return PrecisionMetric()
+        return Precision()
     elif metric_name == "Recall":
-        return RecallMetric()
+        return Recall()
 
     raise ValueError(f"No metric found for: '{metric_name}'.")
 
@@ -83,7 +83,7 @@ class Metric(ABC):
             raise ValueError("Predictions and actual values cannot be empty.")
 
 
-class MeanSquaredErrorMetric(Metric):
+class MeanSquaredError(Metric):
     """Metric for Mean Squared Error in regression."""
 
     def compute(self, predictions: np.ndarray,
@@ -93,7 +93,7 @@ class MeanSquaredErrorMetric(Metric):
         return float(np.mean((actual_values - predictions) ** 2))
 
 
-class MeanAbsoluteErrorMetric(Metric):
+class MeanAbsoluteError(Metric):
     """Metric for Mean Absolute Error in regression."""
 
     def compute(self, predictions: np.ndarray,
@@ -103,7 +103,7 @@ class MeanAbsoluteErrorMetric(Metric):
         return float(np.mean(np.abs(predictions - actual_values)))
 
 
-class RSquaredMetric(Metric):
+class RSquared(Metric):
     """Metric for R-squared in regression."""
 
     def compute(self, predictions: np.ndarray,
@@ -116,7 +116,7 @@ class RSquaredMetric(Metric):
             if ss_total != 0 else float("nan")
 
 
-class AccuracyMetric(Metric):
+class Accuracy(Metric):
     """Metric for Accuracy in classification."""
 
     def compute(self, predictions: np.ndarray,
@@ -141,7 +141,7 @@ class AccuracyMetric(Metric):
         return float(correct_preds / len(predictions))
 
 
-class PrecisionMetric(Metric):
+class Precision(Metric):
     """Metric for Precision in classification."""
 
     def compute(self, predictions: np.ndarray,
@@ -163,7 +163,7 @@ class PrecisionMetric(Metric):
         return float(tp / (tp + fp)) if (tp + fp) > 0 else 0.0
 
 
-class RecallMetric(Metric):
+class Recall(Metric):
     """Metric for Recall in classification."""
 
     def compute(self, predictions: np.ndarray,
