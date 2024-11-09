@@ -8,7 +8,8 @@ class LogisticRegressor(Model):
     """A Logistic Regression implementation of the Model class."""
 
     def __init__(self, *args, **kwargs) -> None:
-        """Initialize the Logistic Regression model with the provided parameters.
+        """Initialize the Logistic Regression model with the provided
+        parameters.
 
         Args:
             *args: Positional arguments for Logistic Regression parameters.
@@ -20,7 +21,8 @@ class LogisticRegressor(Model):
         self.type = "classification"
 
     def fit(self, observations: np.ndarray, ground_truths: np.ndarray) -> None:
-        """Train the Logistic Regression model using observations and ground truths.
+        """Train the Logistic Regression model using
+        observations and ground truths.
 
         Args:
             observations (np.ndarray): Observations used to train the model.
@@ -45,7 +47,8 @@ class LogisticRegressor(Model):
         """Predict classes for the given observations.
 
         Args:
-            observations (np.ndarray): The observations for which to predict classes.
+            observations (np.ndarray): The observations for
+            which to predict classes.
                 Row dimension is samples, column dimension is variables.
 
         Returns:

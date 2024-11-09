@@ -51,16 +51,16 @@ class Pipeline:
     def _validate_model_type(self):
         """Check that model type is compatible with the target feature type."""
         if (
-            self._target_feature.type == "categorical"
-            and self._model.type != "classification"
+            self._target_feature.type == "categorical" and
+                self._model.type != "classification"
         ):
             raise ValueError(
                 "Model type must be classification for "
                 "categorical target feature"
             )
         if (
-            self._target_feature.type == "continuous"
-            and self._model.type != "regression"
+            self._target_feature.type == "continuous" and
+                self._model.type != "regression"
         ):
             raise ValueError(
                 "Model type must be regression for continuous target feature"
@@ -163,13 +163,15 @@ class Pipeline:
         """Evaluate the model and collect results."""
         self._train_metrics_results, self._metrics_results = [], []
 
-        train_predictions = self._model.predict(self._compact_vectors(self._train_X))
+        train_predictions = (self._model.predict
+                             (self._compact_vectors(self._train_X)))
         for metric in self._metrics:
             self._train_metrics_results.append(
                 (metric, metric.compute(train_predictions, self._train_y))
             )
 
-        test_predictions = self._model.predict(self._compact_vectors(self._test_X))
+        test_predictions = self._model.predict(self._compact_vectors
+                                               (self._test_X))
         for metric in self._metrics:
             self._metrics_results.append(
                 (metric, metric.compute(test_predictions, self._test_y))

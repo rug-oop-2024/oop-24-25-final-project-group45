@@ -49,7 +49,8 @@ class DecisionTreeModel(Model):
         """Predict classes for the given observations.
 
         Args:
-            observations (np.ndarray): The observations for which to predict classes.
+            observations (np.ndarray): The observations for which to
+            predict classes.
                 Row dimension is samples, column dimension is variables.
 
         Returns:
@@ -61,10 +62,12 @@ class DecisionTreeModel(Model):
         """Predict class probabilities for the given observations.
 
         Args:
-            observations (np.ndarray): The observations for which to predict probabilities.
+            observations (np.ndarray): The observations for which to
+            predict probabilities.
                 Row dimension is samples, column dimension is variables.
 
         Returns:
-            np.ndarray: Predicted probabilities for each class in each observation.
+            np.ndarray: Predicted probabilities for each class
+            in each observation.
         """
         return self._model.predict_proba(observations)

@@ -35,8 +35,8 @@ for key in ["result", "executed_pipeline", "active_pipeline", "result_data"]:
 
 st.write("# ⚙ Modelling")
 display_helper_text(
-    "In this section, you can design a "
-    + "machine learning pipeline to train a model on a dataset."
+    "In this section, you can design a " + "machine learning pipeline to "
+                                           "train a model on a dataset."
 )
 
 automl = AutoMLSystem.get_instance()
@@ -47,7 +47,8 @@ model_chosen, features_chosen, metrics_chosen = False, False, False
 
 st.write("## Select Dataset:")
 dataset_name = st.selectbox(
-    "Choose dataset to apply to model or upload your own from the datasets page:",
+    "Choose dataset to apply to model or upload your own from "
+    "the datasets page:",
     (ds.name for ds in datasets),
     index=None,
 )

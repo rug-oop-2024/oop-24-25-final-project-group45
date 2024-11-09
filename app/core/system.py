@@ -26,9 +26,7 @@ class ArtifactRegistry:
         Args:
             artifact (Artifact): artifact to register
         """
-        # save the artifact in the storage
         self._storage.save(artifact.data, artifact.asset_path)
-        # save the metadata in the database
         entry = {
             "name": artifact.name,
             "version": artifact.version,
@@ -37,7 +35,7 @@ class ArtifactRegistry:
             "metadata": artifact.metadata,
             "type": artifact.type,
         }
-        self._database.insert(f"artifacts", artifact.id, entry)
+        self._database.insert("artifacts", artifact.id, entry)
 
     def list(self, type: str = None) -> List[Artifact]:
         """Get artrifacts in the registry

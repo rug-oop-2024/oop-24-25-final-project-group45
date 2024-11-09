@@ -5,7 +5,8 @@ from autoop.core.storage import Storage
 
 
 class Database:
-    """A lightweight database interface for structured storage and retrieval."""
+    """A lightweight database interface for structured storage and
+    retrieval."""
 
     def __init__(self, storage: Storage) -> None:
         """Initialize the database with storage backend.
