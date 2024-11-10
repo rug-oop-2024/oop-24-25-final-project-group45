@@ -177,9 +177,12 @@ if model_chosen and metrics_chosen and features_chosen:
 
         if target_column.type == "categorical":
             unique_vals = loaded_data[target_column.name].unique()
-            preds = [unique_vals[pred] for pred in preds]
+            preds = [unique_vals[int(pred)] for pred in preds]
+
+        preds_df = pd.DataFrame(preds, columns=[target_column.name])
 
         st.write("## Pipeline Results:")
+
         st.write("### Training Metrics:")
         for result in train_output:
             st.write(f"- **{result[0].__class__.__name__}**: {result[1]:.4f}")
@@ -190,7 +193,7 @@ if model_chosen and metrics_chosen and features_chosen:
 
         st.write("### Predictions:")
         if max_predictions == 0 or max_predictions >= len(preds):
-            st.code(preds)
+            st.dataframe(preds_df)
         else:
-            st.code(preds[:max_predictions])
+            st.dataframe(preds_df.head(max_predictions))
             st.write(f"... and {len(preds) - max_predictions} more.")

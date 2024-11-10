@@ -1,33 +1,36 @@
 from typing import List
-
 import streamlit as st
-
 from autoop.core.database import Database
 from autoop.core.ml.artifact import Artifact
 from autoop.core.storage import LocalStorage, Storage
 
 
 class ArtifactRegistry:
-    """Class to register artifacts."""
+    """Manages the registration, retrieval, and deletion of artifacts."""
 
     def __init__(self, database: Database, storage: Storage):
-        """Initialize registry.
+        """
+        Initializes the ArtifactRegistry with specified database and storage.
 
         Args:
-            database (Database): The database
-            storage (Storage): local storage
+            database (Database): Database instance used for
+            recording artifact metadata.
+            storage (Storage): Storage backend to handle
+            artifact data persistence.
         """
         self._database = database
         self._storage = storage
 
     def register(self, artifact: Artifact):
-        """Register the artifact.
+        """
+        Saves and registers a new artifact in the storage and database.
 
         Args:
-            artifact (Artifact): artifact to register
+            artifact (Artifact): The artifact instance to
+            be saved and recorded.
         """
         self._storage.save(artifact.data, artifact.asset_path)
-        entry = {
+        entry_data = {
             "name": artifact.name,
             "version": artifact.version,
             "asset_path": artifact.asset_path,
@@ -35,23 +38,24 @@ class ArtifactRegistry:
             "metadata": artifact.metadata,
             "type": artifact.type,
         }
-        self._database.insert("artifacts", artifact.id, entry)
+        self._database.insert("artifacts", artifact.id, entry_data)
 
     def list(self, type: str = None) -> List[Artifact]:
-        """Get artrifacts in the registry
+        """
+        Retrieves a list of artifacts from the registry,
+        optionally filtered by type.
 
         Args:
-            type (str, optional): type of artifact you need. Defaults to None.
+            type (str, optional): Filter artifacts by specified type
+            (e.g., 'model', 'dataset').
 
         Returns:
-            List[Artifact]: list of artifacts
+            List[Artifact]: List of Artifact instances matching
+            the specified type, if provided.
         """
         entries = self._database.list_entries("artifacts")
-        artifacts = []
-        for id, data in entries:
-            if type is not None and data["type"] != type:
-                continue
-            artifact = Artifact(
+        artifacts = [
+            Artifact(
                 name=data["name"],
                 version=data["version"],
                 asset_path=data["asset_path"],
@@ -60,17 +64,23 @@ class ArtifactRegistry:
                 data=self._storage.load(data["asset_path"]),
                 artifact_type=data["type"],
             )
-            artifacts.append(artifact)
+            for artifact_id, data in entries if
+            type is None or data["type"] == type
+        ]
         return artifacts
 
     def get(self, artifact_id: str) -> Artifact:
-        """Get certain artifact.
+        """
+        Fetches a specific artifact from the registry using its unique ID.
 
         Args:
-            artifact_id (str): id of artifact
+            artifact_id (str): The unique identifier of the desired artifact.
+
+        Returns:
+            Artifact: The artifact instance corresponding to the provided ID.
         """
         data = self._database.fetch("artifacts", artifact_id)
-        st.write(data)
+        st.write(data)  # Debugging/logging in Streamlit
         return Artifact(
             name=data["name"],
             version=data["version"],
@@ -82,38 +92,47 @@ class ArtifactRegistry:
         )
 
     def delete(self, artifact_id: str):
-        """Delete artifact from registry.
+        """
+        Removes a specified artifact from the registry and storage.
 
         Args:
-            artifact_id (str): id of artifact
+            artifact_id (str): The unique identifier of the artifact
+            to delete.
         """
         data = self._database.fetch("artifacts", artifact_id)
-        self._storage.remove(data["asset_path"])
-        self._database.remove("artifacts", artifact_id)
+        if data:
+            self._storage.remove(data["asset_path"])
+            self._database.remove("artifacts", artifact_id)
 
 
 class AutoMLSystem:
-    """Class for system."""
+    """Central system managing artifact storage, registration, and
+    retrieval."""
 
     _instance = None
 
     def __init__(self, storage: LocalStorage, database: Database):
-        """Initialize system.
+        """
+        Initializes the AutoML system with specified storage and database.
 
         Args:
-            storage (LocalStorage): storage of system
-            database (Database): database of objects
+            storage (LocalStorage): Storage backend for saving
+            artifacts and metadata.
+            database (Database): Database instance for managing
+            artifact records.
         """
         self._storage = storage
         self._database = database
         self._registry = ArtifactRegistry(database, storage)
 
     @staticmethod
-    def get_instance():
-        """Get an instance of this class.
+    def get_instance() -> "AutoMLSystem":
+        """
+        Returns a singleton instance of the AutoMLSystem,
+        initializing it if necessary.
 
         Returns:
-            AutoMlSystem: returns instance of this class
+            AutoMLSystem: The system instance for artifact management.
         """
         if AutoMLSystem._instance is None:
             AutoMLSystem._instance = AutoMLSystem(
@@ -125,9 +144,10 @@ class AutoMLSystem:
 
     @property
     def registry(self):
-        """Get artifact registry.
+        """
+        Provides access to the ArtifactRegistry for managing artifacts.
 
         Returns:
-            ArtifactRegistry: return current registry
+            ArtifactRegistry: The registry handling artifact operations.
         """
         return self._registry

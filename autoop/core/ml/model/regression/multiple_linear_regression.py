@@ -44,4 +44,4 @@ class MultipleLinearRegression(Model):
         Returns:
             np.ndarray: Predicted values for each observation.
         """
-        return self._model.predict(observations)
+        return self._model.predict(observations).reshape(-1, 1)

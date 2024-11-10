@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING
 from autoop.core.ml.model.classification.decision_tree_classifier import (
     DecisionTreeModel,
 )
-from autoop.core.ml.model.classification.k_nearest_neighbors import (
-    KNearestNeighbors,
+from autoop.core.ml.model.classification.random_forest import (
+    RandomForest,
 )
 from autoop.core.ml.model.classification.logistic_regression import (
     LogisticRegressor,
@@ -28,7 +28,7 @@ REGRESSION_MODELS = [
 ]
 
 CLASSIFICATION_MODELS = [
-    "KNearestNeighbors",
+    "RandomForest",
     "LogisticRegression",
     "DecisionTreeClassifier",
 ]
@@ -36,17 +36,13 @@ CLASSIFICATION_MODELS = [
 
 def get_model(model_name: str) -> "Model":
     """Get a model by name using this Factory Function."""
-    match model_name:
-        case "MultipleLinearRegression":
-            return MultipleLinearRegression()
-        case "Lasso":
-            return Lasso()
-        case "SupportVectorRegressor":
-            return SupportVectorRegressor()
-        case "KNearestNeighbors":
-            return KNearestNeighbors()
-        case "LogisticRegression":
-            return LogisticRegressor()
-        case "DecisionTreeClassifier":
-            return DecisionTreeModel()
-    raise ValueError(f"Model {model_name} doesn't exist.")
+    model_classes = {
+        "MultipleLinearRegression": MultipleLinearRegression,
+        "Lasso": Lasso,
+        "SupportVectorRegressor": SupportVectorRegressor,
+        "RandomForest": RandomForest,
+        "LogisticRegression": LogisticRegressor,
+        "DecisionTreeClassifier": DecisionTreeModel,
+    }
+
+    return model_classes[model_name]()
