@@ -4,7 +4,7 @@ from glob import glob
 from typing import List
 
 
-class PathNotFoundError(Exception):
+class NotFoundError(Exception):
     """Custom error for handling missing paths in storage operations."""
 
     def __init__(self, path: str) -> None:
@@ -138,10 +138,10 @@ class LocalStorage(Storage):
             path (str): Path to verify.
 
         Raises:
-            PathNotFoundError: Raised if path is not found.
+            NotFoundError: Raised if path is not found.
         """
         if not os.path.exists(path):
-            raise PathNotFoundError(path)
+            raise NotFoundError(path)
 
     def _construct_path(self, path_fragment: str) -> str:
         """Build full path by combining base directory with a path fragment.
