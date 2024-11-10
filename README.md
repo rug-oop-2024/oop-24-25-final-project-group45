@@ -152,31 +152,31 @@ If the feature has been implemented by both students, write `both`.
 If you did not implement the feature
 
 | Requirement                           | Type (FN/NF) | Implemented by | Implementation Completed (add X if done) | Comment |
-|-------------------------------------- |--------------|-----------|-------------------------------------|---------|
-| Up-to-date requirements.txt           | NF           | f         | x                                   | |
-| `ML/detect-features`                  | FN           | F         | x                                   | |
-| `ML/artifact`                         | NF           | F         | x                                   | |
-| `ML/feature`                          | NF           | F         | x                                   | |
-| `ML/metric`                           | NF           | F         | x                                   | |
-| `ML/metric/extensions`                | FN           | F         | x                                   | |
-| `ML/model`                            | NF           | F         | x                                   | |
-| `ML/model/extensions`                 | FN           | F         | x                                   | |
-| `ML/pipeline/evaluation`              | FN           | F         | x                                   | |
-| `ST/page/datasets`                    | NF           | F         | x                                   | |
-| `ST/datasets/management/create`       | FN           | F         | x                                   | |
-| `ST/datasets/management/save`         | FN           | F         | x                                   | |
-| `ST/page/modelling`                   | NF           | F         | x                                   | |
-| `ST/modelling/datasets/list`          | FN           | F         | x                                   | |
-| `ST/modelling/datasets/features`      | FN           | F         | x                                   | |
-| `ST/modelling/models`                 | FN           | f         | x                                   | |
-| `ST/modelling/pipeline/split`         | FN           | f         | x                                   | |
-| `ST/modelling/pipeline/metrics`       | FN           | f         | x                                   | |
-| `ST/modelling/pipeline/summary`       | FN           | f         | x                                   | |
-| `ST/modelling/pipeline/train`         | FN           |           |                                     | |
-| `ST/modelling/pipeline/save`          | FN           |           |                                     | |
-| `ST/page/deployment`                  | FN           |           |                                     | |
-| `ST/deployment/load`                  | FN           |           |                                     | |
-| `ST/deployment/predict`               | FN           |           |                                     | |
+|-------------------------------------- |--------------|----------------|------------------------------------------|---------|
+| Up-to-date requirements.txt           | NF           | f              | x                                        | |
+| `ML/detect-features`                  | FN           | F              | x                                        | |
+| `ML/artifact`                         | NF           | F              | x                                        | |
+| `ML/feature`                          | NF           | F              | x                                        | |
+| `ML/metric`                           | NF           | F              | x                                        | |
+| `ML/metric/extensions`                | FN           | F              | x                                        | |
+| `ML/model`                            | NF           | F              | x                                        | |
+| `ML/model/extensions`                 | FN           | F              | x                                        | |
+| `ML/pipeline/evaluation`              | FN           | F              | x                                        | |
+| `ST/page/datasets`                    | NF           | F              | x                                        | |
+| `ST/datasets/management/create`       | FN           | F              | x                                        | |
+| `ST/datasets/management/save`         | FN           | F              | x                                        | |
+| `ST/page/modelling`                   | NF           | F              | x                                        | |
+| `ST/modelling/datasets/list`          | FN           | F              | x                                        | |
+| `ST/modelling/datasets/features`      | FN           | F              | x                                        | |
+| `ST/modelling/models`                 | FN           | f              | x                                        | |
+| `ST/modelling/pipeline/split`         | FN           | f              | x                                        | |
+| `ST/modelling/pipeline/metrics`       | FN           | f              | x                                        | |
+| `ST/modelling/pipeline/summary`       | FN           | f              | x                                        | |
+| `ST/modelling/pipeline/train`         | FN           | f              | x                                        | |
+| `ST/modelling/pipeline/save`          | FN           |                |                                          | |
+| `ST/page/deployment`                  | FN           |                |                                          | |
+| `ST/deployment/load`                  | FN           |                |                                          | |
+| `ST/deployment/predict`               | FN           |                |                                          | |
 
 If you add extra features, please indicate them below:
 | Requirement                           | Type (FN/NF) | Implemented by       | Implementation Completed (add X if done) | Comment |

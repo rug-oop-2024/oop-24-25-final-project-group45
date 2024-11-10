@@ -1,26 +1,29 @@
 from autoop.core.ml.artifact import Artifact
-
 import io
 import pandas as pd
+from typing import List, Optional
 
 
 class Dataset(Artifact):
-    """Represent a machine learning dataset."""
+    """Represents a machine learning dataset."""
 
-    def __init__(self, *args, **kwargs):
-        """Initialize the dataset as a type of Artifact."""
-        super().__init__(artifact_type="dataset", *args, **kwargs)
+    def __init__(self, *args, tags: Optional[List[str]] = None, **kwargs):
+        """Initialize the dataset as a type of Artifact with optional tags."""
+        super().__init__(artifact_type="dataset", tags=tags, *args, **kwargs)
 
     @staticmethod
     def from_dataframe(
-        data: pd.DataFrame, name: str, asset_path: str, version: str = "1.0.0"
-    ):
-        """Generate a Dataset instance from a pandas DataFrame."""
+        data: pd.DataFrame, name: str, asset_path: str, version: str = "1.0.0",
+            tags: Optional[List[str]] = None
+    ) -> "Dataset":
+        """Generate a Dataset instance from a pandas DataFrame
+        with optional tags."""
         return Dataset(
             name=name,
             asset_path=asset_path,
             data=data.to_csv(index=False).encode(),
             version=version,
+            tags=tags,
         )
 
     def read_df(self) -> pd.DataFrame:

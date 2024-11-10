@@ -41,6 +41,7 @@ display_helper_text(
 
 automl = AutoMLSystem.get_instance()
 datasets = automl.registry.list(type="dataset")
+pipelines = automl.registry.list(type="pipeline")
 
 analysis_metrics = []
 model_chosen, features_chosen, metrics_chosen = False, False, False
@@ -146,6 +147,7 @@ if model_chosen and metrics_chosen and features_chosen:
 
     st.write("## Pipeline Summary:")
     st.write("- **Dataset**:", updated_dataset.name)
+    st.write(f"- **Tags:** {', '.join(selected_data.tags)}")
     st.write("- **Target Column**:", target_column.name)
     st.write(
         "- **Input Columns**:",
@@ -193,7 +195,7 @@ if model_chosen and metrics_chosen and features_chosen:
 
         st.write("### Predictions:")
         if max_predictions == 0 or max_predictions >= len(preds):
-            st.dataframe(preds_df)
+            st.dataframe(preds_df, use_container_width=True)
         else:
-            st.dataframe(preds_df.head(max_predictions))
+            st.dataframe(preds_df.head(max_predictions), use_container_width=True)
             st.write(f"... and {len(preds) - max_predictions} more.")
