@@ -1,32 +1,38 @@
 from autoop.core.ml.artifact import Artifact
-from abc import ABC, abstractmethod
-import pandas as pd
 import io
+import pandas as pd
+from typing import List, Optional
 
 
 class Dataset(Artifact):
-    """A class to represent an ML dataset"""
-    def __init__(self, *args, **kwargs):
-        super().__init__(type="dataset", *args, **kwargs)
+    """Represents a machine learning dataset."""
+
+    def __init__(self, *args, tags: Optional[List[str]] = None, **kwargs):
+        """Initialize the dataset as a type of Artifact with optional tags."""
+        super().__init__(artifact_type="dataset", tags=tags, *args, **kwargs)
 
     @staticmethod
-    def from_dataframe(data: pd.DataFrame, name: str,
-                       asset_path: str, version: str = "1.0.0"):
-        """ Create a dataset from a pandas dataframe."""
+    def from_dataframe(
+        data: pd.DataFrame, name: str, asset_path: str, version: str = "1.0.0",
+            tags: Optional[List[str]] = None
+    ) -> "Dataset":
+        """Generate a Dataset instance from a pandas DataFrame
+        with optional tags."""
         return Dataset(
             name=name,
             asset_path=asset_path,
             data=data.to_csv(index=False).encode(),
             version=version,
+            tags=tags,
         )
 
-    def read(self) -> pd.DataFrame:
-        """ Read data from a given path """
-        bytes = super().read()
-        csv = bytes.decode()
+    def read_df(self) -> pd.DataFrame:
+        """Read and decode data into a DataFrame."""
+        data_bytes = super().read_data()
+        csv = data_bytes.decode()
         return pd.read_csv(io.StringIO(csv))
 
-    def save(self, data: pd.DataFrame) -> bytes:
-        """ Save data to a given path """
-        bytes = data.to_csv(index=False).encode()
-        return super().save(bytes)
+    def save_df(self, data: pd.DataFrame) -> bytes:
+        """Encode and save DataFrame as bytes."""
+        data_bytes = data.to_csv(index=False).encode()
+        return super().save_data(data_bytes)

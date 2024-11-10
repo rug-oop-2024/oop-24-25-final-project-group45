@@ -1,93 +1,156 @@
-from abc import ABC, abstractmethod
 import os
-from typing import List, Union
+from abc import ABC, abstractmethod
 from glob import glob
+from typing import List
+
 
 class NotFoundError(Exception):
-    def __init__(self, path):
-        super().__init__(f"Path not found: {path}")
+    """Custom error for handling missing paths in storage operations."""
+
+    def __init__(self, path: str) -> None:
+        """Raise error when a specified path is missing.
+
+        Args:
+            path (str): Path that was not found.
+        """
+        super().__init__(f"Specified path does not exist: {path}")
+
 
 class Storage(ABC):
+    """Abstract storage interface to define data operations."""
 
     @abstractmethod
-    def save(self, data: bytes, path: str):
-        """
-        Save data to a given path
+    def save(self, data: bytes, path: str) -> None:
+        """Store data at the designated path.
+
         Args:
-            data (bytes): Data to save
-            path (str): Path to save data
+            data (bytes): The binary data to be saved.
+            path (str): Path where data will be stored.
         """
         pass
 
     @abstractmethod
     def load(self, path: str) -> bytes:
-        """
-        Load data from a given path
+        """Retrieve data from a specific path.
+
         Args:
-            path (str): Path to load data
+            path (str): Path to retrieve data from.
+
         Returns:
-            bytes: Loaded data
+            bytes: Data read from the specified path.
         """
         pass
 
     @abstractmethod
-    def delete(self, path: str):
-        """
-        Delete data at a given path
+    def delete(self, path: str) -> None:
+        """Remove data at the specified path.
+
         Args:
-            path (str): Path to delete data
+            path (str): Path to the data for deletion.
         """
         pass
 
     @abstractmethod
-    def list(self, path: str) -> list:
-        """
-        List all paths under a given path
+    def list(self, path: str) -> List[str]:
+        """List all files under a directory path.
+
         Args:
-            path (str): Path to list
+            path (str): Directory path to search.
+
         Returns:
-            list: List of paths
+            List[str]: Filenames located under the specified path.
         """
         pass
 
 
 class LocalStorage(Storage):
+    """Local file-based storage for managing file operations."""
 
-    def __init__(self, base_path: str="./assets"):
-        self._base_path = base_path
-        if not os.path.exists(self._base_path):
-            os.makedirs(self._base_path)
+    def __init__(self, base_directory: str = "./data_storage") -> None:
+        """Set up a local storage instance at the given base path.
 
-    def save(self, data: bytes, key: str):
-        path = self._join_path(key)
-        if not os.path.exists(path):
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, 'wb') as f:
-            f.write(data)
+        Args:
+            base_directory (str, optional): Base directory path for storage.
+                Defaults to "./data_storage".
+        """
+        self.base_directory = os.path.normpath(base_directory)
+        if not os.path.exists(self.base_directory):
+            os.makedirs(self.base_directory)
 
-    def load(self, key: str) -> bytes:
-        path = self._join_path(key)
-        self._assert_path_exists(path)
-        with open(path, 'rb') as f:
-            return f.read()
+    def save(self, data: bytes, filename: str) -> None:
+        """Write binary data to a file in the base directory.
 
-    def delete(self, key: str="/"):
-        self._assert_path_exists(self._join_path(key))
-        path = self._join_path(key)
-        os.remove(path)
+        Args:
+            data (bytes): Data to be saved.
+            filename (str): Filename within the base directory.
+        """
+        full_path = self._construct_path(filename)
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "wb") as file:
+            file.write(data)
 
-    def list(self, prefix: str) -> List[str]:
-        path = self._join_path(prefix)
-        self._assert_path_exists(path)
-        keys = glob(path + "/**/*", recursive=True)
-        return list(filter(os.path.isfile, keys))
+    def load(self, filename: str) -> bytes:
+        """Read binary data from a file.
 
-    def _assert_path_exists(self, path: str):
+        Args:
+            filename (str): File name to read data from.
+
+        Returns:
+            bytes: Binary data stored in the file.
+        """
+        full_path = self._construct_path(filename)
+        self._ensure_path_exists(full_path)
+        with open(full_path, "rb") as file:
+            return file.read()
+
+    def delete(self, filename: str = "/") -> None:
+        """Remove a file from the storage.
+
+        Args:
+            filename (str, optional): Filename to delete. Defaults to "/".
+        """
+        full_path = self._construct_path(filename)
+        self._ensure_path_exists(full_path)
+        os.remove(full_path)
+
+    def list(self, directory_prefix: str = "/") -> List[str]:
+        """Get a list of files in a directory under base storage.
+
+        Args:
+            directory_prefix (str): Directory prefix to start file search.
+
+        Returns:
+            List[str]: List of file paths relative to base directory.
+        """
+        full_path = self._construct_path(directory_prefix)
+        self._ensure_path_exists(full_path)
+        file_paths = glob(os.path.join(full_path, "**", "*"), recursive=True)
+        return [
+            os.path.relpath(path, self.base_directory)
+            for path in file_paths
+            if os.path.isfile(path)
+        ]
+
+    def _ensure_path_exists(self, path: str) -> None:
+        """Validate existence of a given path.
+
+        Args:
+            path (str): Path to verify.
+
+        Raises:
+            NotFoundError: Raised if path is not found.
+        """
         if not os.path.exists(path):
             raise NotFoundError(path)
-    
-    def _join_path(self, path: str) -> str:
-        return os.path.join(self._base_path, path)
 
+    def _construct_path(self, path_fragment: str) -> str:
+        """Build full path by combining base directory with a path fragment.
 
-    
+        Args:
+            path_fragment (str): File or directory name to append to base.
+
+        Returns:
+            str: Full constructed path.
+        """
+        return os.path.normpath(os.path.join(self.base_directory,
+                                             path_fragment))

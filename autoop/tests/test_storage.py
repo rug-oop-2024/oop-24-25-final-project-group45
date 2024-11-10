@@ -1,12 +1,11 @@
-
+import random
+import tempfile
 import unittest
 
 from autoop.core.storage import LocalStorage, NotFoundError
-import random
-import tempfile
+
 
 class TestStorage(unittest.TestCase):
-
     def setUp(self):
         temp_dir = tempfile.mkdtemp()
         self.storage = LocalStorage(temp_dir)
@@ -47,4 +46,3 @@ class TestStorage(unittest.TestCase):
         keys = self.storage.list("test")
         keys = ["/".join(key.split("/")[-2:]) for key in keys]
         self.assertEqual(set(keys), set(random_keys))
-            

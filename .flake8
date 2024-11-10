@@ -1,0 +1,4 @@
+[flake8]
+extend-ignore = E402
+exclude = .github,autoop/tests
+ignore = ANN101,ANN102,D100,D2,D4,ANN002,ANN003
