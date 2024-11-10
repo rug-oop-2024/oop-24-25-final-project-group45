@@ -50,21 +50,18 @@ class Pipeline:
 
     def _validate_model_type(self):
         """Check that model type is compatible with the target feature type."""
-        if (
-            self._target_feature.type == "categorical" and
-                self._model.type != "classification"
-        ):
-            raise ValueError(
-                "Model type must be classification for "
-                "categorical target feature"
-            )
-        if (
-            self._target_feature.type == "continuous" and
-                self._model.type != "regression"
-        ):
-            raise ValueError(
-                "Model type must be regression for continuous target feature"
-            )
+        if self._target_feature.type == "categorical":
+            if self._model.type != "classification":
+                raise ValueError(
+                    "Model type must be classification for "
+                    "categorical target feature"
+                )
+        elif self._target_feature.type == "continuous":
+            if self._model.type != "regression":
+                raise ValueError(
+                    "Model type must be regression for continuous target "
+                    "feature"
+                )
 
     @property
     def model(self) -> "Model":
