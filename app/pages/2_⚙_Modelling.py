@@ -197,5 +197,6 @@ if model_chosen and metrics_chosen and features_chosen:
         if max_predictions == 0 or max_predictions >= len(preds):
             st.dataframe(preds_df, use_container_width=True)
         else:
-            st.dataframe(preds_df.head(max_predictions), use_container_width=True)
+            st.dataframe(preds_df.head(max_predictions),
+                         use_container_width=True)
             st.write(f"... and {len(preds) - max_predictions} more.")
