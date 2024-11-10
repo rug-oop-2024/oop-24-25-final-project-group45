@@ -124,13 +124,11 @@ class Accuracy(Metric):
         """Compute accuracy as the fraction of correct predictions."""
         self._validate_inputs(predictions, actual_values)
 
-        # Flatten one-hot encoded arrays, if applicable
         if predictions.ndim > 1:
             predictions = np.argmax(predictions, axis=1)
         if actual_values.ndim > 1:
             actual_values = np.argmax(actual_values, axis=1)
 
-        # Ensure the arrays have compatible shapes for comparison
         if predictions.shape != actual_values.shape:
             raise ValueError(
                 f"Incompatible shapes for accuracy computation: predictions "
